@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  mc-mod-hub:
+    build: .
+    container_name: mc-mod-hub
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data:/data
+    environment:
+      # Change these before first run in production.
+      - SESSION_SECRET=change-this-to-a-random-string
+      - ADMIN_PASSWORD=admin
+    restart: unless-stopped

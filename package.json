@@ -1,0 +1,16 @@
+{
+  "name": "mc-mod-hub",
+  "version": "1.0.0",
+  "description": "Self-hosted Minecraft mod/addon search hub with review-fake detection and YouTube link discovery",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.3.0",
+    "cheerio": "^1.0.0",
+    "cookie-session": "^2.1.0",
+    "express": "^4.19.2",
+    "node-fetch": "^2.7.0"
+  }
+}

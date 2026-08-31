@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<Container version="2">
+  <Name>mc-mod-hub</Name>
+  <Repository>allornothing/mc-mod-hub:latest</Repository>
+  <Registry>https://hub.docker.com/r/allornothing/mc-mod-hub</Registry>
+  <Network>bridge</Network>
+  <MyIP/>
+  <Shell>sh</Shell>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/aon082910/mc-mod-hub/issues</Support>
+  <Project>https://github.com/aon082910/mc-mod-hub</Project>
+  <Overview>Self-hosted Minecraft mod/addon search hub. Aggregates Modrinth, CurseForge, PlanetMinecraft, 9Minecraft, and BetterBedrock search results into one list, shows the required Java/Bedrock edition and game version on every result, supports browsing by category, and surfaces community discussion (with heuristic fake-review flags) and YouTube videos with download links pulled from their descriptions. Configure API keys from the built-in admin portal at /admin.html — no file editing required.</Overview>
+  <Category>Tools:Utilities</Category>
+  <License>MIT</License>
+  <WebUI>http://[IP]:[PORT:8080]/</WebUI>
+  <TemplateURL>https://raw.githubusercontent.com/aon082910/mc-mod-hub/main/templates/mc-mod-hub.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/aon082910/mc-mod-hub/main/public/icon.svg</Icon>
+  <ExtraParams/>
+  <PostArgs/>
+  <CPUset/>
+  <DateInstalled/>
+  <DonateText/>
+  <DonateLink/>
+  <Config Name="WebUI Port" Target="8080" Default="8080" Mode="tcp" Description="Port to access the web UI" Type="Port" Display="always" Required="true" Mask="false">8080</Config>
+  <Config Name="Data" Target="/data" Default="/mnt/user/appdata/mc-mod-hub" Mode="rw" Description="Persistent storage for the settings/config database (API keys, source toggles, admin password)" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/mc-mod-hub</Config>
+  <Config Name="SESSION_SECRET" Target="SESSION_SECRET" Default="" Mode="" Description="Random string used to sign admin login sessions. Set this to something unique." Type="Variable" Display="always" Required="true" Mask="false"></Config>
+  <Config Name="ADMIN_PASSWORD" Target="ADMIN_PASSWORD" Default="admin" Mode="" Description="Initial admin portal password. Only used the very first time the container starts (before the database exists) — change it from within the admin portal afterward." Type="Variable" Display="always" Required="false" Mask="true">admin</Config>
+</Container>

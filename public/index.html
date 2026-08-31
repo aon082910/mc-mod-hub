@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MC Mod Hub</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="top-banner">
+  <div class="brand">
+    <span class="logo">🧱</span>
+    <div>
+      <h1>MC Mod Hub</h1>
+      <div class="tagline">Search Minecraft mods &amp; addons across multiple sites</div>
+    </div>
+  </div>
+  <nav>
+    <a href="admin.html">Admin config</a>
+  </nav>
+</div>
+
+<div class="search-row">
+  <div id="categoryPills" class="category-pills"></div>
+  <div class="search-bar">
+    <input id="q" type="text" placeholder="Search for a mod or addon (e.g. Sodium, JEI, Applied Energistics)...">
+    <button onclick="doSearch()">Search</button>
+  </div>
+</div>
+
+<div class="main-nav">
+  <a href="#" class="active" onclick="goHome();return false;">Home</a>
+  <a href="#" onclick="scrollToCategories();return false;">Browse by Category</a>
+  <a href="#" onclick="scrollToNotices();return false;">New Posts</a>
+  <a href="admin.html">Admin Config</a>
+</div>
+
+<div class="layout">
+  <div class="main-col">
+
+    <div id="otherSites" class="other-sites"></div>
+    <div id="errors"></div>
+
+    <div id="homeView">
+      <div class="notice-board" id="noticeBoardSection">
+        <h3>📢 Notice Board — Newly Posted</h3>
+        <div id="noticeBox" class="notice-box">
+          <div class="empty">Loading recent posts…</div>
+        </div>
+      </div>
+
+      <div id="categorySection">
+        <h3 style="font-size:13px;color:var(--green-dark);text-transform:uppercase;letter-spacing:.04em;margin:0 0 8px">Browse by Category</h3>
+        <div id="categoryGrid" class="category-grid"></div>
+      </div>
+    </div>
+
+    <div id="resultsView" style="display:none">
+      <div class="results-header">
+        <h2 id="resultsTitle">Results</h2>
+        <span id="resultsCount" class="results-count"></span>
+      </div>
+      <div id="results"></div>
+    </div>
+
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-box">
+      <h3>Quick Browse</h3>
+      <ul id="sidebarCategories"></ul>
+    </div>
+    <div class="sidebar-box">
+      <h3>Sources</h3>
+      <ul>
+        <li><a href="#">Modrinth</a></li>
+        <li><a href="#">CurseForge</a></li>
+        <li><a href="#">PlanetMinecraft</a></li>
+        <li><a href="#">9Minecraft</a></li>
+        <li><a href="#">BetterBedrock</a></li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Detail view -->
+<div id="detail" style="display:none">
+  <div class="layout" style="display:block">
+    <button class="btn secondary small" onclick="closeDetail()">← Back to results</button>
+    <div id="detailHeader" class="detail-header" style="margin-top:12px"></div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="downloads" onclick="switchTab('downloads')">Downloads</div>
+      <div class="tab" data-tab="reviews" onclick="switchTab('reviews')">Reviews / Comments</div>
+      <div class="tab" data-tab="videos" onclick="switchTab('videos')">YouTube</div>
+    </div>
+
+    <div id="tab-downloads" class="tab-content"></div>
+    <div id="tab-reviews" class="tab-content" style="display:none"></div>
+    <div id="tab-videos" class="tab-content" style="display:none"></div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

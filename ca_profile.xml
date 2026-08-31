@@ -1,0 +1,18 @@
+<CommunityApplications>
+  <!-- Required profile -->
+  <Profile>
+MC Mod Hub is a self-hosted Minecraft mod/addon search hub. It aggregates search results from Modrinth, CurseForge, PlanetMinecraft, 9Minecraft, and BetterBedrock into one list, shows the required game edition (Java/Bedrock) and game version for every result, supports browsing by category (Mods, Modpacks, Resource Packs, Data Packs, Shaders, Maps/Worlds, Bedrock Add-Ons), and surfaces community discussion (with heuristic fake-review flags) and YouTube videos with download links extracted from their descriptions.
+
+This repository hosts the Unraid Community Applications template for MC Mod Hub:
+
+- **mc-mod-hub** — the single all-in-one container (web UI + backend together).
+
+All API keys (CurseForge, YouTube) are entered and changed from the built-in admin portal after first boot — no file editing required.
+
+For support, bug reports, and feature requests, open an issue on the GitHub repository below.
+  </Profile>
+  <!-- Optional icon -->
+  <Icon>https://raw.githubusercontent.com/aon082910/mc-mod-hub/main/public/icon.svg</Icon>
+  <!-- Optional web page -->
+  <WebPage>https://github.com/aon082910/mc-mod-hub</WebPage>
+</CommunityApplications>

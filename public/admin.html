@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>MC Mod Hub — Admin</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>⚙ Admin Config</h1>
+  <a href="index.html">← Back to search</a>
+</header>
+
+<div class="container" style="max-width:640px">
+
+  <div id="loginPanel" class="panel" style="display:none">
+    <h3>Admin login</h3>
+    <div class="form-row">
+      <label>Password</label>
+      <input type="password" id="loginPassword">
+    </div>
+    <button class="btn" onclick="login()">Log in</button>
+    <div id="loginError" class="error"></div>
+    <p class="hint">Default password is <code>admin</code> unless overridden by the ADMIN_PASSWORD environment variable at first boot. Change it below after logging in.</p>
+  </div>
+
+  <div id="adminPanel" style="display:none">
+
+    <div class="panel">
+      <h3>API Keys</h3>
+      <div class="form-row">
+        <label>CurseForge API key</label>
+        <input type="text" id="curseforge_api_key" placeholder="Enter your CurseForge API key">
+        <div class="hint">Get a free key at console.curseforge.com/#/api-keys (requires a free Eternal / CurseForge Core account).</div>
+      </div>
+      <div class="form-row">
+        <label>YouTube Data API key</label>
+        <input type="text" id="youtube_api_key" placeholder="Enter your YouTube Data API v3 key">
+        <div class="hint">Create one in Google Cloud Console → APIs & Services → Credentials, with the "YouTube Data API v3" enabled.</div>
+      </div>
+      <button class="btn" onclick="saveSettings()">Save settings</button>
+      <div id="saveStatus" class="save-status"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Sources</h3>
+      <div class="form-row checkbox"><input type="checkbox" id="enable_modrinth"><label for="enable_modrinth">Modrinth (official API, no key required)</label></div>
+      <div class="form-row checkbox"><input type="checkbox" id="enable_curseforge"><label for="enable_curseforge">CurseForge (official API)</label></div>
+      <div class="form-row checkbox"><input type="checkbox" id="enable_planetminecraft"><label for="enable_planetminecraft">PlanetMinecraft (scraped search)</label></div>
+      <div class="form-row checkbox"><input type="checkbox" id="enable_9minecraft"><label for="enable_9minecraft">9Minecraft (scraped search)</label></div>
+      <div class="form-row checkbox"><input type="checkbox" id="enable_betterbedrock"><label for="enable_betterbedrock">BetterBedrock (scraped catalog, filtered locally)</label></div>
+      <div class="form-row checkbox"><input type="checkbox" id="enable_youtube"><label for="enable_youtube">YouTube video search</label></div>
+      <div class="form-row checkbox"><input type="checkbox" id="enable_reddit"><label for="enable_reddit">Reddit comment/review discovery</label></div>
+      <div class="hint">MC-Addons.com and MCPEDL aren't scraped — MC-Addons' own robots.txt blocks automated search, and MCPEDL's results load via client-side JS with nothing in the raw page to scrape. Both still show up as quick "search on site" links on the search page.</div>
+      <div class="form-row">
+        <label>Results per source</label>
+        <input type="number" id="results_per_source" min="5" max="50">
+      </div>
+      <button class="btn" onclick="saveSettings()">Save settings</button>
+    </div>
+
+    <div class="panel">
+      <h3>Change admin password</h3>
+      <div class="form-row">
+        <label>New password</label>
+        <input type="password" id="newPassword">
+      </div>
+      <button class="btn secondary" onclick="changePassword()">Update password</button>
+      <div id="pwStatus" class="save-status"></div>
+    </div>
+
+    <button class="btn secondary" onclick="logout()">Log out</button>
+  </div>
+
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
