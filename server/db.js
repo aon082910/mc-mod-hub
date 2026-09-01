@@ -44,6 +44,13 @@ function init() {
     const initialPw = process.env.ADMIN_PASSWORD || 'admin';
     setSetting('admin_password_hash', hashPassword(initialPw));
   }
+
+  // SESSION_SECRET is optional: if it's not supplied via env, generate one
+  // once and persist it here so cookie sessions survive container restarts
+  // instead of invalidating every time on a freshly-random secret.
+  if (!getSetting('session_secret')) {
+    setSetting('session_secret', crypto.randomBytes(32).toString('hex'));
+  }
 }
 
 function getSetting(key) {

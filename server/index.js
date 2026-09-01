@@ -8,10 +8,13 @@ const youtubeRoutes = require('./routes/youtube');
 const categoriesRoutes = require('./routes/categories');
 const noticesRoutes = require('./routes/notices');
 const { router: adminRoutes } = require('./routes/admin');
+const { getSetting } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
-const SESSION_SECRET = process.env.SESSION_SECRET || 'change-me-please-mc-mod-hub';
+// SESSION_SECRET is optional — if not set, db.js generates and persists a
+// random one on first boot so it stays stable across restarts.
+const SESSION_SECRET = process.env.SESSION_SECRET || getSetting('session_secret');
 
 app.use(express.json());
 app.use(cookieSession({

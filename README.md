@@ -55,7 +55,7 @@ docker build -t mc-mod-hub:latest .
 **Option B — import the template manually right now** (works immediately, doesn't require CA approval):
 1. Copy [`templates/mc-mod-hub.xml`](templates/mc-mod-hub.xml) into `/boot/config/plugins/dockerMan/templates-user/` on your Unraid box
 2. Docker tab → Add Container → select "mc-mod-hub" from the template dropdown
-3. Confirm the Data path (defaults to `/mnt/user/appdata/mc-mod-hub`) and set `SESSION_SECRET` to any random string
+3. Confirm the Data path (defaults to `/mnt/user/appdata/mc-mod-hub`) — `SESSION_SECRET` is optional and can be left blank
 4. Apply
 
 **Option C — manual container (equivalent settings):**
@@ -64,7 +64,7 @@ docker build -t mc-mod-hub:latest .
 | Repository | `allornothing/mc-mod-hub:latest` |
 | Port | `8080` → your chosen host port |
 | Path | `/data` → `/mnt/user/appdata/mc-mod-hub` |
-| Variable | `SESSION_SECRET` = any random string |
+| Variable | `SESSION_SECRET` = optional; leave unset to auto-generate one on first boot |
 | Variable | `ADMIN_PASSWORD` = temporary first-boot password (default `admin`) |
 
 ---
@@ -91,6 +91,7 @@ Keys are stored in the SQLite database under `/data` (persisted via the Docker v
 - Fake-review flags are heuristic pattern-matching (duplicate text, generic short praise, timing bursts) — treat them as "worth a second look," not a verdict
 - YouTube video search costs API quota (100 units per search call against the default 10,000/day free quota — plenty for personal use)
 - If a source's API key is missing/invalid, that source's errors show inline on the search page rather than breaking the whole search
+- `SESSION_SECRET` is optional. If left unset, a random one is generated and stored in the SQLite database under `/data` on first boot, so admin login sessions keep working across container restarts as long as that volume persists. If you wipe `/data` (or run without a volume), a new secret gets generated and any logged-in admin session is invalidated — not a problem, just log back in
 - Reddit sometimes 403s requests coming from datacenter/cloud IP ranges. From a typical home Unraid box this works fine; if you see "Reddit search failed: 403" in the Reviews tab, it means Reddit is blocking your specific network — the rest of the app is unaffected
 - PlanetMinecraft is fronted by Cloudflare bot management that intermittently 403s even well-formed, identical requests — the app retries automatically and only surfaces an error if all retries fail
 - Java vs. Bedrock edition and game version are read directly from structured fields on Modrinth/CurseForge (always accurate — those platforms are Java Edition only), but on the scraped sites they're parsed out of listing text with regex/keyword matching. PlanetMinecraft in particular mixes both editions under generic terms like "Addon," so occasionally a Java Edition result can show up while browsing the Bedrock Add-Ons category, or vice versa — the edition badge on that specific result is still correct, it's just filed under the wrong category tile

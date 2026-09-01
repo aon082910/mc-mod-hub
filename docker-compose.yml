@@ -9,7 +9,8 @@ services:
     volumes:
       - ./data:/data
     environment:
-      # Change these before first run in production.
-      - SESSION_SECRET=change-this-to-a-random-string
+      # SESSION_SECRET is optional — omit it and the app generates and
+      # persists a random one on first boot. Set it explicitly only if you
+      # want to fix it yourself (e.g. sharing a secret across instances).
       - ADMIN_PASSWORD=admin
     restart: unless-stopped
