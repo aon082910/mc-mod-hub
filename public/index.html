@@ -32,6 +32,7 @@
   <a href="#" class="active" onclick="goHome();return false;">Home</a>
   <a href="#" onclick="scrollToCategories();return false;">Browse by Category</a>
   <a href="#" onclick="scrollToNotices();return false;">New Posts</a>
+  <a href="#" onclick="openMyMods();return false;">My Mods</a>
   <a href="admin.html">Admin Config</a>
 </div>
 
@@ -61,6 +62,14 @@
         <span id="resultsCount" class="results-count"></span>
       </div>
       <div id="results"></div>
+    </div>
+
+    <div id="myModsView" style="display:none">
+      <div class="results-header">
+        <h2>My Mods — Update Checker</h2>
+        <button class="btn small" onclick="loadMyMods()">↻ Rescan</button>
+      </div>
+      <div id="myModsContent"></div>
     </div>
 
   </div>

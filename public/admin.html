@@ -60,6 +60,25 @@
     </div>
 
     <div class="panel">
+      <h3>Performance</h3>
+      <div class="form-row">
+        <label>Search result cache (seconds)</label>
+        <input type="number" id="cache_ttl_seconds" min="0" max="86400">
+        <div class="hint">How long search results and the notice board are cached before re-querying sources. Lower = fresher but slower and more load on the (rate-limit-sensitive) scraped sites. Set to 0 to disable caching entirely.</div>
+      </div>
+      <button class="btn" onclick="saveSettings()">Save settings</button>
+    </div>
+
+    <div class="panel">
+      <h3>Server Integration</h3>
+      <div class="form-row checkbox"><input type="checkbox" id="enable_mods_folder"><label for="enable_mods_folder">Enable mods folder integration</label></div>
+      <div class="hint">Lets you click "Install to my server" on a search result (Modrinth/CurseForge only) to download it straight into a mounted mods folder, and adds an Update Checker that scans installed .jar files by content hash (not filename) against Modrinth and CurseForge to flag outdated ones.</div>
+      <div class="hint">Requires mounting your Minecraft server's mods folder into this container at <code>/mods</code> (see the Path config in the Unraid template, or add a volume manually). Toggling this on without that mount will show "not mounted" instead of doing anything destructive.</div>
+      <div id="modsFolderStatus" class="hint" style="margin-top:8px"></div>
+      <button class="btn" onclick="saveSettings()">Save settings</button>
+    </div>
+
+    <div class="panel">
       <h3>Change admin password</h3>
       <div class="form-row">
         <label>New password</label>

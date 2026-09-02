@@ -12,6 +12,11 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT
   );
+  CREATE TABLE IF NOT EXISTS search_cache (
+    cache_key TEXT PRIMARY KEY,
+    value TEXT NOT NULL,
+    expires_at INTEGER NOT NULL
+  );
 `);
 
 const DEFAULTS = {
@@ -25,7 +30,9 @@ const DEFAULTS = {
   enable_planetminecraft: '1',
   enable_9minecraft: '1',
   enable_betterbedrock: '1',
-  results_per_source: '20'
+  results_per_source: '20',
+  cache_ttl_seconds: '900',
+  enable_mods_folder: '0'
 };
 
 function hashPassword(pw) {

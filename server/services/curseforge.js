@@ -41,6 +41,7 @@ function mapMod(mod) {
     icon: mod.logo && mod.logo.thumbnailUrl,
     pageUrl: mod.links && mod.links.websiteUrl,
     downloadUrl: latestFile ? latestFile.downloadUrl : null,
+    downloadFilename: latestFile ? latestFile.fileName : null,
     categories: (mod.categories || []).map(c => c.name),
     updatedAt: mod.dateModified,
     // CurseForge only ever hosts Minecraft: Java Edition content.
@@ -82,4 +83,34 @@ async function getNewest(apiKey, limit = 10) {
   return (data.data || []).map(mapMod);
 }
 
-module.exports = { search, getNewest, getClassId };
+async function getModById(modId, apiKey) {
+  const res = await fetch(`${BASE}/mods/${modId}`, { headers: { 'x-api-key': apiKey, Accept: 'application/json' } });
+  if (!res.ok) throw new Error(`CurseForge mod lookup failed: ${res.status}`);
+  const data = await res.json();
+  return data.data;
+}
+
+// Identifies installed .jar files by their murmur2 "fingerprint" — the same
+// mechanism CurseForge's own app/launcher uses (POST /v1/mods/fingerprints,
+// documented at docs.curseforge.com). Returns a map keyed by the fingerprint
+// that was looked up, to whatever file matched it.
+async function lookupByFingerprints(fingerprints, apiKey) {
+  if (!apiKey) throw new Error('CurseForge API key is not configured');
+  if (!fingerprints.length) return {};
+  const res = await fetch(`${BASE}/mods/fingerprints`, {
+    method: 'POST',
+    headers: { 'x-api-key': apiKey, Accept: 'application/json', 'Content-Type': 'application/json' },
+    body: JSON.stringify({ fingerprints })
+  });
+  if (!res.ok) throw new Error(`CurseForge fingerprint lookup failed: ${res.status}`);
+  const data = await res.json();
+  const matches = (data.data && data.data.exactMatches) || [];
+  const byFingerprint = {};
+  for (const m of matches) {
+    const fp = m.file && m.file.fileFingerprint;
+    if (fp !== undefined) byFingerprint[fp] = m;
+  }
+  return byFingerprint;
+}
+
+module.exports = { search, getNewest, getClassId, getModById, lookupByFingerprints };

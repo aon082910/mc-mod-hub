@@ -34,6 +34,7 @@ router.get('/settings', requireAuth, (req, res) => {
   // Never send the password hash back to the client.
   const safe = { ...settings };
   delete safe.admin_password_hash;
+  delete safe.session_secret;
   // Mask secret keys but tell the frontend whether one is set.
   safe.curseforge_api_key_set = !!settings.curseforge_api_key;
   safe.youtube_api_key_set = !!settings.youtube_api_key;
@@ -46,7 +47,7 @@ const EDITABLE_KEYS = [
   'curseforge_api_key', 'youtube_api_key',
   'enable_modrinth', 'enable_curseforge', 'enable_youtube', 'enable_reddit',
   'enable_planetminecraft', 'enable_9minecraft', 'enable_betterbedrock',
-  'results_per_source'
+  'results_per_source', 'cache_ttl_seconds', 'enable_mods_folder'
 ];
 
 router.post('/settings', requireAuth, (req, res) => {

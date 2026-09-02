@@ -2,6 +2,8 @@ let currentResult = null;
 let currentResults = [];
 let categories = [];
 let activeCategory = '';
+let modsStatus = { enabled: false, available: false };
+let isAdmin = false;
 
 // mc-addons.com and mcpedl.com aren't scraped into the unified results list
 // (see admin config for why) — both are still one click away here.
@@ -13,7 +15,22 @@ const OTHER_SITES = [
 async function init() {
   await loadCategories();
   loadNotices();
+  refreshModsStatus();
   document.getElementById('q').addEventListener('keydown', e => { if (e.key === 'Enter') doSearch(); });
+}
+
+async function refreshModsStatus() {
+  try {
+    const [statusRes, sessionRes] = await Promise.all([
+      fetch('/api/mods/status'),
+      fetch('/api/admin/session')
+    ]);
+    modsStatus = await statusRes.json();
+    isAdmin = (await sessionRes.json()).isAdmin;
+  } catch (e) {
+    modsStatus = { enabled: false, available: false };
+    isAdmin = false;
+  }
 }
 
 async function loadCategories() {
@@ -72,10 +89,107 @@ async function loadNotices() {
 function goHome() {
   document.getElementById('homeView').style.display = 'block';
   document.getElementById('resultsView').style.display = 'none';
+  document.getElementById('myModsView').style.display = 'none';
   document.getElementById('q').value = '';
   document.getElementById('otherSites').innerHTML = '';
   document.querySelectorAll('.category-pill').forEach(p => p.classList.toggle('active', p.dataset.key === ''));
   activeCategory = '';
+}
+
+async function openMyMods() {
+  document.getElementById('homeView').style.display = 'none';
+  document.getElementById('resultsView').style.display = 'none';
+  document.getElementById('myModsView').style.display = 'block';
+  document.getElementById('otherSites').innerHTML = '';
+  await refreshModsStatus();
+  loadMyMods();
+}
+
+async function loadMyMods() {
+  const el = document.getElementById('myModsContent');
+
+  if (!isAdmin) {
+    el.innerHTML = `<div class="panel">Log in to <a href="admin.html">Admin Config</a> first — installing/updating mods on your server requires an admin session.</div>`;
+    return;
+  }
+  if (!modsStatus.enabled) {
+    el.innerHTML = `<div class="panel">Mods folder integration is off. Enable it in <a href="admin.html">Admin Config</a> → Server Integration.</div>`;
+    return;
+  }
+  if (!modsStatus.available) {
+    el.innerHTML = `<div class="panel">Mods folder (<code>${escapeHtml(modsStatus.dir)}</code>) isn't mounted or isn't writable. Mount your server's mods folder there (see the Path config in the Unraid template) and restart the container.</div>`;
+    return;
+  }
+
+  el.innerHTML = '<div class="empty">Scanning installed mods and checking for updates…</div>';
+  try {
+    const res = await fetch('/api/mods/installed');
+    const data = await res.json();
+    if (data.error) {
+      el.innerHTML = `<div class="error">${escapeHtml(data.error)}</div>`;
+      return;
+    }
+    if (data.errors && data.errors.length) {
+      el.innerHTML = data.errors.map(e => `<div class="error">⚠ ${e.source}: ${escapeHtml(e.message)}</div>`).join('');
+    } else {
+      el.innerHTML = '';
+    }
+    if (!data.items.length) {
+      el.innerHTML += `<div class="empty">No .jar files found in ${escapeHtml(modsStatus.dir)}.</div>`;
+      return;
+    }
+    el.innerHTML += `
+      <table class="results-table">
+        <thead>
+          <tr><th>File</th><th>Matched</th><th>Installed</th><th>Latest</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${data.items.map((item, i) => `
+            <tr>
+              <td>
+                <div class="name-cell">
+                  ${item.icon ? `<img src="${item.icon}" onerror="this.style.visibility='hidden'">` : ''}
+                  <div>
+                    <div class="title">${item.title ? escapeHtml(item.title) : escapeHtml(item.filename)}</div>
+                    <div class="desc">${escapeHtml(item.filename)}</div>
+                  </div>
+                </div>
+              </td>
+              <td>${item.matched ? `<span class="source-tag ${sourceCssClass(item.source)}">${escapeHtml(item.source)}</span>` : '<span class="hint">unmatched</span>'}</td>
+              <td>${item.installedVersion ? escapeHtml(item.installedVersion) : '—'}</td>
+              <td>${item.latestVersion ? escapeHtml(item.latestVersion) : '—'}</td>
+              <td>${modStatusBadge(item)}</td>
+              <td>${item.updateDownloadUrl ? `<button class="btn small" onclick='updateInstalledMod(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Update</button>` : ''}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (e) {
+    el.innerHTML = `<div class="error">Scan failed: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+function modStatusBadge(item) {
+  if (!item.matched) return '<span class="hint">Not matched — can\'t be identified by content hash</span>';
+  if (item.upToDate === true) return '<span class="edition-tag java">Up to date</span>';
+  if (item.upToDate === false) return '<span class="edition-tag bedrock">Update available</span>';
+  return '<span class="hint">Unknown</span>';
+}
+
+async function updateInstalledMod(item) {
+  try {
+    const res = await fetch('/api/mods/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ oldFilename: item.filename, downloadUrl: item.updateDownloadUrl, newFilename: item.updateFilename })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Update failed');
+    loadMyMods();
+  } catch (e) {
+    alert(`Update failed: ${e.message}`);
+  }
 }
 
 function scrollToCategories() {
@@ -108,6 +222,7 @@ async function runSearch(q, categoryKey) {
   const countEl = document.getElementById('resultsCount');
 
   document.getElementById('homeView').style.display = 'none';
+  document.getElementById('myModsView').style.display = 'none';
   document.getElementById('resultsView').style.display = 'block';
   resultsEl.innerHTML = '<div class="empty">Searching…</div>';
   errorsEl.innerHTML = '';
@@ -241,6 +356,13 @@ function switchTab(name) {
   }
 }
 
+function canInstallToServer(r) {
+  if (!isAdmin || !modsStatus.enabled || !modsStatus.available) return false;
+  if (r.source === 'modrinth') return true;
+  if (r.source === 'curseforge') return !!(r.downloadUrl && r.downloadFilename);
+  return false; // scraped sources have no reliable single-file download URL to install
+}
+
 function loadDownloads(r) {
   const el = document.getElementById('tab-downloads');
   el.innerHTML = `
@@ -249,8 +371,34 @@ function loadDownloads(r) {
       <p class="hint">Required edition: <b>${r.edition === 'bedrock' ? 'Minecraft Bedrock Edition' : 'Minecraft Java Edition'}</b>${r.gameVersions && r.gameVersions.length ? ` · Game version: <b>${r.gameVersions.map(escapeHtml).join(', ')}</b>` : ''}</p>
       <a class="btn" href="${r.pageUrl}" target="_blank" rel="noopener">Open project page ↗</a>
       ${r.downloadUrl ? `<a class="btn secondary" href="${r.downloadUrl}" target="_blank" rel="noopener" style="margin-left:8px">Direct file download ↗</a>` : ''}
+      ${canInstallToServer(r) ? `<button class="btn secondary" style="margin-left:8px" onclick="installToServer()">⬇ Install to my server</button>` : ''}
+      <div id="installStatus" class="save-status"></div>
     </div>
   `;
+}
+
+async function installToServer() {
+  const r = currentResult;
+  const status = document.getElementById('installStatus');
+  status.textContent = 'Installing…';
+  status.style.color = '';
+  try {
+    const body = r.source === 'modrinth'
+      ? { source: 'modrinth', slug: r.slug }
+      : { source: 'curseforge', downloadUrl: r.downloadUrl, filename: r.downloadFilename };
+    const res = await fetch('/api/mods/install', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Install failed');
+    status.textContent = `✓ Installed as ${data.filename}`;
+    status.style.color = 'var(--accent)';
+  } catch (e) {
+    status.textContent = `Failed: ${e.message}`;
+    status.style.color = 'var(--danger)';
+  }
 }
 
 async function loadReviews(r) {

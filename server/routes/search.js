@@ -7,6 +7,9 @@ const planetminecraft = require('../services/planetminecraft');
 const ninemc = require('../services/ninemc');
 const betterbedrock = require('../services/betterbedrock');
 const { getCategory } = require('../services/categories');
+const { getCached, setCached } = require('../services/cache');
+
+const SOURCE_KEYS = ['enable_modrinth', 'enable_curseforge', 'enable_planetminecraft', 'enable_9minecraft', 'enable_betterbedrock'];
 
 router.get('/search', async (req, res) => {
   const query = (req.query.q || '').trim();
@@ -16,6 +19,15 @@ router.get('/search', async (req, res) => {
   if (!query && !category) return res.json({ results: [], errors: [] });
 
   const limit = parseInt(getSetting('results_per_source') || '20', 10);
+
+  // Cache key covers everything that changes the outcome: the query itself,
+  // the result size, and which sources are currently toggled on (a source
+  // flip should be reflected immediately, not wait out a stale cache entry).
+  const sourceState = SOURCE_KEYS.map(k => getSetting(k)).join('');
+  const cacheKey = `search:${query}|${categoryKey}|${limit}|${sourceState}`;
+  const cached = getCached(cacheKey);
+  if (cached) return res.json({ ...cached, cached: true });
+
   const tasks = [];
   const errors = [];
 
@@ -64,7 +76,9 @@ router.get('/search', async (req, res) => {
   const resultSets = await Promise.all(tasks);
   const results = resultSets.flat().sort((a, b) => (b.downloads || 0) - (a.downloads || 0));
 
-  res.json({ results, errors });
+  const payload = { results, errors };
+  if (results.length) setCached(cacheKey, payload);
+  res.json(payload);
 });
 
 module.exports = router;

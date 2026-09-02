@@ -7,6 +7,10 @@ Self-hosted Minecraft mod/addon search hub for Unraid.
 - **Notice board** on the homepage shows newly-posted mods/addons, pulled live from Modrinth's "newest" feed, 9Minecraft's blog homepage, and CurseForge's newest listings (if a key is configured)
 - Every result and every mod detail page shows the **required game edition (Java or Bedrock)** and the **game version(s) it supports**
 - Mod detail page shows **download links**, **community discussion/comments** (via Reddit, since none of these sites expose a public reviews API) with **heuristic fake-review flags**, and **YouTube videos** about the mod with **download links auto-extracted from video descriptions**
+- **Search results and the notice board are cached** in SQLite (15 min by default, configurable, disable-able) so repeat searches are instant and the scraped sites aren't hit on every page load
+- **Optional server integration** (off by default — mount a folder and flip a switch in admin config to turn it on):
+  - **Install to my server**: a button on Modrinth/CurseForge results that downloads the file straight into your mounted Minecraft mods folder
+  - **Update checker** ("My Mods" tab): scans every `.jar` in that folder by exact content hash (SHA1 against Modrinth, murmur2 fingerprint against CurseForge — the same method their own official apps use, not filename guessing) and flags anything with a newer version available, one click to update
 - Admin config portal (`/admin.html`) to set/change API keys and toggle sources — no file editing required after first boot
 
 **Honesty check on scope, per site:**
@@ -86,6 +90,15 @@ Keys are stored in the SQLite database under `/data` (persisted via the Docker v
 - Search page: type a mod name → results merge Modrinth, CurseForge, PlanetMinecraft, 9Minecraft, and BetterBedrock, sorted by download count where available (scraped sites without a public download counter sort after ones that have one)
 - Click a result → **Downloads** tab (direct file/project links), **Reviews / Comments** tab (Reddit threads mentioning the mod, each comment scored `normal` / `medium` / `low` trust with flags like "near-duplicate of another comment" or "generic praise, no specifics"), **YouTube** tab (videos about the mod, with any download links found in each video's description highlighted — a green checkmark means it matched a known mod-hosting domain)
 
+### Optional: install/update mods directly on your server
+
+1. Mount your Minecraft server's mods folder into the container at `/mods` (Unraid template: the "Mods Folder" Path config, advanced view; docker-compose: uncomment the `/mods` volume line)
+2. Admin config → **Server Integration** → check **Enable mods folder integration** → Save. The page shows a green "Mounted and writable" line once it can actually see the folder
+3. On any Modrinth/CurseForge search result's Downloads tab, an **⬇ Install to my server** button now appears — downloads the file straight into that folder
+4. The **My Mods** tab in the main nav scans everything already in that folder and tells you what's outdated, with a one-click **Update** button per mod
+
+This only works for Modrinth and CurseForge — PlanetMinecraft/9Minecraft/BetterBedrock don't expose a single reliable direct-file URL the way those two do, so there's no Install button on results from those sources. Requires being logged into Admin config (the same session cookie covers both pages).
+
 ## Notes / limitations
 
 - Fake-review flags are heuristic pattern-matching (duplicate text, generic short praise, timing bursts) — treat them as "worth a second look," not a verdict
@@ -97,6 +110,9 @@ Keys are stored in the SQLite database under `/data` (persisted via the Docker v
 - Java vs. Bedrock edition and game version are read directly from structured fields on Modrinth/CurseForge (always accurate — those platforms are Java Edition only), but on the scraped sites they're parsed out of listing text with regex/keyword matching. PlanetMinecraft in particular mixes both editions under generic terms like "Addon," so occasionally a Java Edition result can show up while browsing the Bedrock Add-Ons category, or vice versa — the edition badge on that specific result is still correct, it's just filed under the wrong category tile
 - Category browsing on CurseForge resolves each category name (e.g. "Shaders") to CurseForge's real classId at runtime via their official `/v1/categories` endpoint rather than a hardcoded guess, so it stays correct even if CurseForge renumbers classes — but if a category genuinely doesn't exist on CurseForge (e.g. Data Packs may not be a distinct class there), that source is silently skipped for that category rather than showing wrong results
 - The "notice board" newest-posts feed from CurseForge uses a documented but not independently verified sort parameter (their API docs confirm the sort enum exists but don't publish the exact name-to-number mapping) — if it's ever wrong, that source simply drops out of the notice board rather than showing incorrect "newest" items
+- The update checker only identifies mods it can get an exact content-hash match for. A `.jar` you built yourself, downloaded from somewhere else entirely, or that's been repackaged, will show up as "unmatched" rather than guessed at from its filename — that's intentional, a wrong guess here is worse than no answer
+- CurseForge fingerprint matching (murmur2) is implemented from CurseForge's own documented algorithm and verified against the reference implementation's published test vectors, but end-to-end matching against real CurseForge data couldn't be tested during development without a live API key — if it ever silently matches nothing, Modrinth matching (independently verified end-to-end against real files) is unaffected
+- "Install to my server" and the update checker both require an active admin login (same session as `/admin.html`) — a logged-out visitor sees the search/browse features only, never a way to write to your server's filesystem
 
 ---
 

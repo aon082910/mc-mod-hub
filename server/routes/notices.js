@@ -4,12 +4,20 @@ const { getSetting } = require('../db');
 const modrinth = require('../services/modrinth');
 const ninemc = require('../services/ninemc');
 const curseforge = require('../services/curseforge');
+const { getCached, setCached } = require('../services/cache');
+
+const SOURCE_KEYS = ['enable_modrinth', 'enable_9minecraft', 'enable_curseforge'];
 
 // The "newest" notice board merges freshly-published items across sources.
 // CurseForge's contribution is best-effort (see curseforge.js getNewest) and
 // is simply dropped from the feed rather than failing the whole board if its
 // sort parameter turns out to be wrong.
 router.get('/notices', async (req, res) => {
+  const sourceState = SOURCE_KEYS.map(k => getSetting(k)).join('');
+  const cacheKey = `notices:${sourceState}`;
+  const cached = getCached(cacheKey);
+  if (cached) return res.json({ ...cached, cached: true });
+
   const tasks = [];
   const errors = [];
 
@@ -41,7 +49,9 @@ router.get('/notices', async (req, res) => {
     return true;
   });
 
-  res.json({ items, errors });
+  const payload = { items, errors };
+  if (items.length) setCached(cacheKey, payload);
+  res.json(payload);
 });
 
 module.exports = router;

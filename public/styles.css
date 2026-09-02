@@ -11,6 +11,7 @@
   --link: #2f6b3c;
   --warn: #b5850a;
   --danger: #c0392b;
+  --accent: var(--green-mid);
 }
 
 * { box-sizing: border-box; }

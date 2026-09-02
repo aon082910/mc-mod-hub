@@ -8,6 +8,10 @@ services:
       - "8080:8080"
     volumes:
       - ./data:/data
+      # Optional — only needed for the "Install to my server" / update-checker
+      # feature (off by default, toggled in admin config). Point this at your
+      # Minecraft server's actual mods folder.
+      # - ./mods:/mods
     environment:
       # SESSION_SECRET is optional — omit it and the app generates and
       # persists a random one on first boot. Set it explicitly only if you

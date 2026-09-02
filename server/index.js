@@ -7,6 +7,7 @@ const reviewRoutes = require('./routes/reviews');
 const youtubeRoutes = require('./routes/youtube');
 const categoriesRoutes = require('./routes/categories');
 const noticesRoutes = require('./routes/notices');
+const modsRoutes = require('./routes/mods');
 const { router: adminRoutes } = require('./routes/admin');
 const { getSetting } = require('./db');
 
@@ -28,6 +29,7 @@ app.use('/api', reviewRoutes);
 app.use('/api', youtubeRoutes);
 app.use('/api', categoriesRoutes);
 app.use('/api', noticesRoutes);
+app.use('/api', modsRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use(express.static(path.join(__dirname, '..', 'public')));

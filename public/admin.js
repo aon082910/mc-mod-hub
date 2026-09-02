@@ -45,6 +45,27 @@ async function loadSettings() {
   document.getElementById('enable_youtube').checked = s.enable_youtube === '1';
   document.getElementById('enable_reddit').checked = s.enable_reddit === '1';
   document.getElementById('results_per_source').value = s.results_per_source || 20;
+  document.getElementById('cache_ttl_seconds').value = s.cache_ttl_seconds || 900;
+  document.getElementById('enable_mods_folder').checked = s.enable_mods_folder === '1';
+  refreshModsFolderStatus();
+}
+
+async function refreshModsFolderStatus() {
+  const el = document.getElementById('modsFolderStatus');
+  try {
+    const res = await fetch('/api/mods/status');
+    const s = await res.json();
+    if (!s.enabled) {
+      el.textContent = '';
+      return;
+    }
+    el.textContent = s.available
+      ? `✓ Mounted and writable at ${s.dir}`
+      : `⚠ Not mounted or not writable at ${s.dir} — mount a volume there for this feature to work`;
+    el.style.color = s.available ? 'var(--accent)' : 'var(--warn)';
+  } catch (e) {
+    el.textContent = '';
+  }
 }
 
 async function saveSettings() {
@@ -58,7 +79,9 @@ async function saveSettings() {
     enable_betterbedrock: document.getElementById('enable_betterbedrock').checked ? '1' : '0',
     enable_youtube: document.getElementById('enable_youtube').checked ? '1' : '0',
     enable_reddit: document.getElementById('enable_reddit').checked ? '1' : '0',
-    results_per_source: document.getElementById('results_per_source').value
+    results_per_source: document.getElementById('results_per_source').value,
+    cache_ttl_seconds: document.getElementById('cache_ttl_seconds').value,
+    enable_mods_folder: document.getElementById('enable_mods_folder').checked ? '1' : '0'
   };
   const res = await fetch('/api/admin/settings', {
     method: 'POST',
