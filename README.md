@@ -2,8 +2,8 @@
 
 Self-hosted Minecraft mod/addon search hub for Unraid.
 
-- Searches **Modrinth**, **CurseForge**, **PlanetMinecraft**, **9Minecraft**, and **BetterBedrock**, merging results into one table (styled after LimeTorrents' layout: category pills + search bar, green nav, notice board, sidebar quick-browse)
-- **Browse by category** (Mods, Modpacks, Resource/Texture Packs, Data Packs, Shaders, Maps/Worlds, Bedrock Add-Ons) without typing a search term — category tiles on the homepage and in the sidebar
+- Searches **Modrinth**, **CurseForge**, **PlanetMinecraft**, **9Minecraft**, **BetterBedrock**, **Hangar**, and **SpigotMC**, merging results into one table (styled after LimeTorrents' layout: category pills + search bar, green nav, notice board, sidebar quick-browse)
+- **Browse by category** (Mods, Modpacks, Resource/Texture Packs, Data Packs, Shaders, Maps/Worlds, Bedrock Add-Ons, Server Plugins) without typing a search term — category tiles on the homepage and in the sidebar
 - **Notice board** on the homepage shows newly-posted mods/addons, pulled live from Modrinth's "newest" feed, 9Minecraft's blog homepage, and CurseForge's newest listings (if a key is configured)
 - Every result and every mod detail page shows the **required game edition (Java or Bedrock)** and the **game version(s) it supports**
 - Mod detail page shows **download links**, **community discussion/comments** (via Reddit, since none of these sites expose a public reviews API) with **heuristic fake-review flags**, and **YouTube videos** about the mod with **download links auto-extracted from video descriptions**
@@ -15,12 +15,16 @@ Self-hosted Minecraft mod/addon search hub for Unraid.
 
 **Honesty check on scope, per site:**
 - **Modrinth, CurseForge** — official public APIs, most reliable
+- **Hangar** — PaperMC's official plugin repository (Paper/Waterfall/Velocity server plugins). Official public API, no key required — same reliability tier as Modrinth/CurseForge
+- **SpigotMC** — SpigotMC itself has no public API and is fronted by anti-bot protection that blocks direct scraping (a direct download attempt gets a hard 403). This uses **Spiget**, a long-running third-party API that mirrors free SpigotMC resources on its own CDN — verified end-to-end (search, icon, and download all confirmed working against real resources). Paid ("premium") resources aren't downloadable through it, so those show a project-page link instead of a download button, same as any source without a direct file
 - **PlanetMinecraft, 9Minecraft** — no public API, so these are scraped from their server-rendered search-result HTML. This is inherently more fragile than an API: if either site redesigns its page markup, that source's results can silently drop to zero until the selectors are updated (search errors surface inline on the search page rather than failing silently)
 - **BetterBedrock** — has no real search endpoint at all (confirmed: its `?s=` query parameter is ignored server-side). Instead this scrapes its public mods catalog page and filters by keyword locally, so it only covers what's on that catalog page, refreshed at most every 10 minutes
 - **MC-Addons.com** — **not scraped**. Its own `robots.txt` explicitly disallows automated search (`Disallow: /*do=search`), so this app respects that and only offers a link to its homepage instead
 - **MCPEDL** — **not scraped**. Its search results load entirely client-side via JavaScript after the page loads; the raw HTML response has nothing in it to parse, and adding a headless browser just for this one site was judged not worth the container weight/complexity. A direct search link is provided instead
 
 Sites without scraping still show up as one-click "search on site" links right under the search box.
+
+**On going broader (site-agnostic "what would show up in a Google search"):** deliberately not done. A lot of what actually ranks for mod-download searches is low-trust ad-farm reposting sites, some of which bundle malware in their "download" buttons — and none of it carries the structured version/edition/download data every other source here does, which is what makes the results table and the one-click install feature trustworthy in the first place. If that's still wanted, it should be a clearly-separated, visibly-unverified "web search" tab rather than merged into the main table — ask if you want that built.
 
 The Reddit-based "reviews" tab is community discussion, not verified store reviews — there isn't a public review API for Minecraft mods to pull from.
 
@@ -87,7 +91,7 @@ Keys are stored in the SQLite database under `/data` (persisted via the Docker v
 
 ## 5. Using it
 
-- Search page: type a mod name → results merge Modrinth, CurseForge, PlanetMinecraft, 9Minecraft, and BetterBedrock, sorted by download count where available (scraped sites without a public download counter sort after ones that have one)
+- Search page: type a mod name → results merge Modrinth, CurseForge, PlanetMinecraft, 9Minecraft, BetterBedrock, Hangar, and SpigotMC, sorted by download count where available (scraped sites without a public download counter sort after ones that have one)
 - Click a result → **Downloads** tab (direct file/project links), **Reviews / Comments** tab (Reddit threads mentioning the mod, each comment scored `normal` / `medium` / `low` trust with flags like "near-duplicate of another comment" or "generic praise, no specifics"), **YouTube** tab (videos about the mod, with any download links found in each video's description highlighted — a green checkmark means it matched a known mod-hosting domain)
 
 ### Optional: install/update mods directly on your server
@@ -97,7 +101,9 @@ Keys are stored in the SQLite database under `/data` (persisted via the Docker v
 3. On any Modrinth/CurseForge search result's Downloads tab, an **⬇ Install to my server** button now appears — downloads the file straight into that folder
 4. The **My Mods** tab in the main nav scans everything already in that folder and tells you what's outdated, with a one-click **Update** button per mod
 
-This only works for Modrinth and CurseForge — PlanetMinecraft/9Minecraft/BetterBedrock don't expose a single reliable direct-file URL the way those two do, so there's no Install button on results from those sources. Requires being logged into Admin config (the same session cookie covers both pages).
+This works for Modrinth, CurseForge, Hangar, and SpigotMC (free resources only — premium ones have no direct link to install). PlanetMinecraft/9Minecraft/BetterBedrock don't expose a single reliable direct-file URL the way those do, so there's no Install button on results from those sources. Requires being logged into Admin config (the same session cookie covers both pages).
+
+The update checker's hash matching only covers Modrinth and CurseForge — Hangar and SpigotMC don't publish a public hash-lookup API, so a plugin installed from either shows as "unmatched" in My Mods *unless* it happens to also be published on Modrinth or CurseForge under the same file (matching is purely by file content, not by where you got it from, so cross-published plugins can still get identified that way).
 
 ## Notes / limitations
 

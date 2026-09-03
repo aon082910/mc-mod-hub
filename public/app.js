@@ -358,8 +358,8 @@ function switchTab(name) {
 
 function canInstallToServer(r) {
   if (!isAdmin || !modsStatus.enabled || !modsStatus.available) return false;
-  if (r.source === 'modrinth') return true;
-  if (r.source === 'curseforge') return !!(r.downloadUrl && r.downloadFilename);
+  if (r.source === 'modrinth' || r.source === 'hangar') return true; // resolved server-side from slug
+  if (r.source === 'curseforge' || r.source === 'spigot') return !!(r.downloadUrl && r.downloadFilename);
   return false; // scraped sources have no reliable single-file download URL to install
 }
 
@@ -383,9 +383,9 @@ async function installToServer() {
   status.textContent = 'Installing…';
   status.style.color = '';
   try {
-    const body = r.source === 'modrinth'
-      ? { source: 'modrinth', slug: r.slug }
-      : { source: 'curseforge', downloadUrl: r.downloadUrl, filename: r.downloadFilename };
+    const body = (r.source === 'modrinth' || r.source === 'hangar')
+      ? { source: r.source, slug: r.slug }
+      : { source: r.source, downloadUrl: r.downloadUrl, filename: r.downloadFilename };
     const res = await fetch('/api/mods/install', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

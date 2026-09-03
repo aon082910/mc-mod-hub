@@ -5,6 +5,7 @@ const { requireAuth } = require('./admin');
 const modsFolder = require('../services/modsFolder');
 const modrinth = require('../services/modrinth');
 const curseforge = require('../services/curseforge');
+const hangar = require('../services/hangar');
 const { sha1Hex, curseforgeFingerprint } = require('../services/hashing');
 
 function featureEnabled() {
@@ -141,11 +142,12 @@ router.get('/mods/installed', requireAuth, async (req, res) => {
   res.json({ items, errors });
 });
 
-// Modrinth search results don't carry a direct file URL (the search API
-// doesn't expose one), so for that source this resolves the latest file
-// itself from the project slug rather than requiring the frontend to know
-// Modrinth's download URL scheme. CurseForge results already carry
-// downloadUrl/downloadFilename directly from search, so those are used as-is.
+// Modrinth and Hangar search results don't carry a direct file URL (their
+// search APIs don't expose one), so for those sources this resolves the
+// latest file itself from the project slug rather than requiring the
+// frontend to know each site's download URL scheme. CurseForge and Spigot
+// results already carry downloadUrl/downloadFilename directly from search,
+// so those are used as-is.
 router.post('/mods/install', requireAuth, async (req, res) => {
   if (!featureEnabled()) return res.status(400).json({ error: 'Mods folder feature is disabled in admin config' });
   if (!(await modsFolder.isAvailable())) {
@@ -159,6 +161,13 @@ router.post('/mods/install', requireAuth, async (req, res) => {
     if (source === 'modrinth') {
       if (!slug) return res.status(400).json({ error: 'slug is required for Modrinth installs' });
       const file = await modrinth.getVersionsDownloadLink(slug);
+      if (!file) return res.status(404).json({ error: 'No downloadable file found for this project' });
+      url = file.url;
+      name = file.filename;
+    } else if (source === 'hangar') {
+      if (!slug || !slug.includes('/')) return res.status(400).json({ error: 'slug (owner/slug) is required for Hangar installs' });
+      const [owner, projectSlug] = slug.split('/');
+      const file = await hangar.getLatestDownload(owner, projectSlug);
       if (!file) return res.status(404).json({ error: 'No downloadable file found for this project' });
       url = file.url;
       name = file.filename;

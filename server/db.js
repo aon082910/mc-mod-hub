@@ -30,6 +30,8 @@ const DEFAULTS = {
   enable_planetminecraft: '1',
   enable_9minecraft: '1',
   enable_betterbedrock: '1',
+  enable_hangar: '1',
+  enable_spigot: '1',
   results_per_source: '20',
   cache_ttl_seconds: '900',
   enable_mods_folder: '0'

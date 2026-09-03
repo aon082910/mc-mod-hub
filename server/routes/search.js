@@ -6,10 +6,15 @@ const curseforge = require('../services/curseforge');
 const planetminecraft = require('../services/planetminecraft');
 const ninemc = require('../services/ninemc');
 const betterbedrock = require('../services/betterbedrock');
+const hangar = require('../services/hangar');
+const spigot = require('../services/spigot');
 const { getCategory } = require('../services/categories');
 const { getCached, setCached } = require('../services/cache');
 
-const SOURCE_KEYS = ['enable_modrinth', 'enable_curseforge', 'enable_planetminecraft', 'enable_9minecraft', 'enable_betterbedrock'];
+const SOURCE_KEYS = [
+  'enable_modrinth', 'enable_curseforge', 'enable_planetminecraft', 'enable_9minecraft',
+  'enable_betterbedrock', 'enable_hangar', 'enable_spigot'
+];
 
 router.get('/search', async (req, res) => {
   const query = (req.query.q || '').trim();
@@ -54,13 +59,18 @@ router.get('/search', async (req, res) => {
   // representative keyword (e.g. "Shaders" -> "shader").
   const scrapeQuery = query || (category ? category.scrapeKeyword : '');
 
-  if (scrapeQuery && getSetting('enable_planetminecraft') === '1') {
+  // PlanetMinecraft/9Minecraft are client-mod/blog sites that don't
+  // meaningfully index server plugins — the Plugins category skips them
+  // rather than return noise.
+  const includePlanetAndNineMc = !(category && category.excludePlanetAndNineMc);
+
+  if (includePlanetAndNineMc && scrapeQuery && getSetting('enable_planetminecraft') === '1') {
     tasks.push(
       planetminecraft.search(scrapeQuery, limit)
         .catch(e => { errors.push({ source: 'planetminecraft', message: e.message }); return []; })
     );
   }
-  if (scrapeQuery && getSetting('enable_9minecraft') === '1') {
+  if (includePlanetAndNineMc && scrapeQuery && getSetting('enable_9minecraft') === '1') {
     tasks.push(
       ninemc.search(scrapeQuery, limit)
         .catch(e => { errors.push({ source: '9minecraft', message: e.message }); return []; })
@@ -70,6 +80,18 @@ router.get('/search', async (req, res) => {
     tasks.push(
       betterbedrock.search(scrapeQuery || 'mod', limit)
         .catch(e => { errors.push({ source: 'betterbedrock', message: e.message }); return []; })
+    );
+  }
+  if (scrapeQuery && getSetting('enable_hangar') === '1' && (!category || category.includeHangar)) {
+    tasks.push(
+      hangar.search(scrapeQuery, limit)
+        .catch(e => { errors.push({ source: 'hangar', message: e.message }); return []; })
+    );
+  }
+  if (scrapeQuery && getSetting('enable_spigot') === '1' && (!category || category.includeSpigot)) {
+    tasks.push(
+      spigot.search(scrapeQuery, limit)
+        .catch(e => { errors.push({ source: 'spigot', message: e.message }); return []; })
     );
   }
 

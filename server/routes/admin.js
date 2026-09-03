@@ -47,6 +47,7 @@ const EDITABLE_KEYS = [
   'curseforge_api_key', 'youtube_api_key',
   'enable_modrinth', 'enable_curseforge', 'enable_youtube', 'enable_reddit',
   'enable_planetminecraft', 'enable_9minecraft', 'enable_betterbedrock',
+  'enable_hangar', 'enable_spigot',
   'results_per_source', 'cache_ttl_seconds', 'enable_mods_folder'
 ];
 
