@@ -8,12 +8,14 @@ const ninemc = require('../services/ninemc');
 const betterbedrock = require('../services/betterbedrock');
 const hangar = require('../services/hangar');
 const spigot = require('../services/spigot');
+const tlmods = require('../services/tlmods');
+const minecraftskins = require('../services/minecraftskins');
 const { getCategory } = require('../services/categories');
 const { getCached, setCached } = require('../services/cache');
 
 const SOURCE_KEYS = [
   'enable_modrinth', 'enable_curseforge', 'enable_planetminecraft', 'enable_9minecraft',
-  'enable_betterbedrock', 'enable_hangar', 'enable_spigot'
+  'enable_betterbedrock', 'enable_hangar', 'enable_spigot', 'enable_tlmods', 'enable_minecraftskins'
 ];
 
 router.get('/search', async (req, res) => {
@@ -92,6 +94,28 @@ router.get('/search', async (req, res) => {
     tasks.push(
       spigot.search(scrapeQuery, limit)
         .catch(e => { errors.push({ source: 'spigot', message: e.message }); return []; })
+    );
+  }
+
+  // TLMods carries a fixed set of content types under separate path
+  // segments; a category with no `tlmodsPath` (or an unrecognized one, e.g.
+  // no category at all defaults to the site's mods root) is skipped outright
+  // rather than searching the wrong section.
+  const tlmodsPath = category ? category.tlmodsPath : '';
+  if (scrapeQuery && tlmodsPath !== null && tlmodsPath !== undefined && getSetting('enable_tlmods') === '1') {
+    tasks.push(
+      tlmods.search(scrapeQuery, limit, tlmodsPath)
+        .catch(e => { errors.push({ source: 'tlmods', message: e.message }); return []; })
+    );
+  }
+
+  // MinecraftSkins.net has no real keyword search (see minecraftskins.js),
+  // so it only ever participates in the dedicated Skins category browse,
+  // never a plain keyword search where its results would just be noise.
+  if (category && category.includeMinecraftSkins && getSetting('enable_minecraftskins') === '1') {
+    tasks.push(
+      minecraftskins.search(scrapeQuery, limit)
+        .catch(e => { errors.push({ source: 'minecraftskins', message: e.message }); return []; })
     );
   }
 

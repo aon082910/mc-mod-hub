@@ -44,6 +44,8 @@ async function loadSettings() {
   document.getElementById('enable_betterbedrock').checked = s.enable_betterbedrock === '1';
   document.getElementById('enable_hangar').checked = s.enable_hangar === '1';
   document.getElementById('enable_spigot').checked = s.enable_spigot === '1';
+  document.getElementById('enable_tlmods').checked = s.enable_tlmods === '1';
+  document.getElementById('enable_minecraftskins').checked = s.enable_minecraftskins === '1';
   document.getElementById('enable_youtube').checked = s.enable_youtube === '1';
   document.getElementById('enable_reddit').checked = s.enable_reddit === '1';
   document.getElementById('results_per_source').value = s.results_per_source || 20;
@@ -81,6 +83,8 @@ async function saveSettings() {
     enable_betterbedrock: document.getElementById('enable_betterbedrock').checked ? '1' : '0',
     enable_hangar: document.getElementById('enable_hangar').checked ? '1' : '0',
     enable_spigot: document.getElementById('enable_spigot').checked ? '1' : '0',
+    enable_tlmods: document.getElementById('enable_tlmods').checked ? '1' : '0',
+    enable_minecraftskins: document.getElementById('enable_minecraftskins').checked ? '1' : '0',
     enable_youtube: document.getElementById('enable_youtube').checked ? '1' : '0',
     enable_reddit: document.getElementById('enable_reddit').checked ? '1' : '0',
     results_per_source: document.getElementById('results_per_source').value,

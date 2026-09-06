@@ -13,6 +13,15 @@
 //    location, different loader), so they get their own "plugins" category
 //    rather than being folded into "mods" — but they still show up in a
 //    plain keyword search with no category selected, same as every source
+//  - TLMods (TLauncher's own mod mirror): one template reused across five
+//    content types, each under its own path segment (`tlmodsPath`) — "" for
+//    mods (lives at the site root), "modpacks", "resourcepacks", "maps",
+//    "shaderpacks". `null` means TLMods doesn't carry that type at all
+//    (data packs, Bedrock add-ons, server plugins, skins) and is skipped.
+//  - MinecraftSkins.net: skins are their own content type (cosmetic, not
+//    edition-locked, no "install to server" concept) and the site has no
+//    real keyword search (see minecraftskins.js) — it only ever contributes
+//    to the "skins" category, never a plain keyword search.
 //
 // Minecraft: Java Edition and Bedrock Edition content is not interchangeable
 // (different mod formats, different marketplaces) — Modrinth and CurseForge
@@ -27,7 +36,8 @@ const CATEGORIES = [
     modrinthProjectType: 'mod',
     curseforgeClassName: 'Mods',
     scrapeKeyword: 'mod',
-    includeBetterBedrock: true
+    includeBetterBedrock: true,
+    tlmodsPath: ''
   },
   {
     key: 'modpacks',
@@ -36,7 +46,8 @@ const CATEGORIES = [
     modrinthProjectType: 'modpack',
     curseforgeClassName: 'Modpacks',
     scrapeKeyword: 'modpack',
-    includeBetterBedrock: false
+    includeBetterBedrock: false,
+    tlmodsPath: 'modpacks'
   },
   {
     key: 'resourcepacks',
@@ -45,7 +56,8 @@ const CATEGORIES = [
     modrinthProjectType: 'resourcepack',
     curseforgeClassName: 'Resource Packs',
     scrapeKeyword: 'texture pack',
-    includeBetterBedrock: true
+    includeBetterBedrock: true,
+    tlmodsPath: 'resourcepacks'
   },
   {
     key: 'datapacks',
@@ -54,7 +66,8 @@ const CATEGORIES = [
     modrinthProjectType: 'datapack',
     curseforgeClassName: 'Data Packs',
     scrapeKeyword: 'data pack',
-    includeBetterBedrock: false
+    includeBetterBedrock: false,
+    tlmodsPath: null
   },
   {
     key: 'shaders',
@@ -63,7 +76,8 @@ const CATEGORIES = [
     modrinthProjectType: 'shader',
     curseforgeClassName: 'Shaders',
     scrapeKeyword: 'shader',
-    includeBetterBedrock: false
+    includeBetterBedrock: false,
+    tlmodsPath: 'shaderpacks'
   },
   {
     key: 'worlds',
@@ -72,7 +86,8 @@ const CATEGORIES = [
     modrinthProjectType: null,
     curseforgeClassName: 'Worlds',
     scrapeKeyword: 'map',
-    includeBetterBedrock: false
+    includeBetterBedrock: false,
+    tlmodsPath: 'maps'
   },
   {
     key: 'bedrock',
@@ -82,7 +97,8 @@ const CATEGORIES = [
     curseforgeClassName: null,
     scrapeKeyword: 'addon',
     includeBetterBedrock: true,
-    javaSourcesExcluded: true
+    javaSourcesExcluded: true,
+    tlmodsPath: null
   },
   {
     key: 'plugins',
@@ -94,7 +110,23 @@ const CATEGORIES = [
     includeBetterBedrock: false,
     includeHangar: true,
     includeSpigot: true,
-    excludePlanetAndNineMc: true
+    excludePlanetAndNineMc: true,
+    tlmodsPath: null
+  },
+  {
+    key: 'skins',
+    label: 'Skins',
+    icon: '🧑‍🎨',
+    modrinthProjectType: null,
+    curseforgeClassName: null,
+    scrapeKeyword: 'skin',
+    includeBetterBedrock: false,
+    includeHangar: false,
+    includeSpigot: false,
+    excludePlanetAndNineMc: true,
+    javaSourcesExcluded: true,
+    tlmodsPath: null,
+    includeMinecraftSkins: true
   }
 ];
 
