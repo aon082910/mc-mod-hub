@@ -7,10 +7,92 @@ const modrinth = require('../services/modrinth');
 const curseforge = require('../services/curseforge');
 const hangar = require('../services/hangar');
 const github = require('../services/github');
+const spigot = require('../services/spigot');
+const installs = require('../services/installs');
 const { sha1Hex, curseforgeFingerprint } = require('../services/hashing');
+
+// Sources with no public hash-lookup API — anything installed from these
+// through this app gets a provenance row (see installs.js) so the update
+// tracker has something to follow up on later. Modrinth/CurseForge don't
+// need this at all; exact content hashing already identifies those
+// regardless of install path.
+const PROVENANCE_SOURCES = ['hangar', 'spigot', 'github'];
 
 function featureEnabled() {
   return getSetting('enable_mods_folder') === '1';
+}
+
+// Follows up on a provenance row for a file that didn't hash-match Modrinth
+// or CurseForge. None of Hangar, SpigotMC, or GitHub publish a hash-lookup
+// API, so this is "ask the source what it says is newest right now" rather
+// than exact content identification — still meaningfully better than
+// leaving every plugin installed from these sources permanently
+// "unmatched" in My Mods, but returns null (not a guess) if the source
+// can't be reached or the recorded provenance doesn't resolve to anything
+// anymore (e.g. a Hangar project that's since been deleted).
+async function lookupProvenance(row, githubToken) {
+  const { source, slug, installed_version: installedVersion } = row;
+  try {
+    if (source === 'hangar') {
+      const [owner, projectSlug] = slug.split('/');
+      const latest = await hangar.getLatestDownload(owner, projectSlug);
+      if (!latest) return null;
+      return {
+        title: projectSlug,
+        icon: null,
+        pageUrl: `https://hangar.papermc.io/${owner}/${projectSlug}`,
+        installedVersion,
+        latestVersion: latest.version,
+        upToDate: installedVersion != null ? latest.version === installedVersion : null,
+        updateDownloadUrl: installedVersion !== latest.version ? latest.url : null,
+        updateFilename: latest.filename,
+        updateVersion: latest.version,
+        slug
+      };
+    }
+    if (source === 'github') {
+      const [owner, repo] = slug.split('/');
+      const latest = await github.getLatestJarAsset(owner, repo, githubToken);
+      if (!latest) return null;
+      return {
+        title: repo,
+        icon: null,
+        pageUrl: `https://github.com/${slug}`,
+        installedVersion,
+        latestVersion: latest.version,
+        upToDate: installedVersion != null ? latest.version === installedVersion : null,
+        updateDownloadUrl: installedVersion !== latest.version ? latest.url : null,
+        updateFilename: latest.filename,
+        updateVersion: latest.version,
+        slug
+      };
+    }
+    if (source === 'spigot') {
+      const [latest, info] = await Promise.all([
+        spigot.getLatestVersion(slug),
+        spigot.getResourceInfo(slug)
+      ]);
+      if (!latest) return null;
+      const latestId = String(latest.id);
+      return {
+        title: (info && info.name) || `Resource ${slug}`,
+        icon: `https://api.spiget.org/v2/resources/${slug}/icon`,
+        pageUrl: `https://www.spigotmc.org/resources/${slug}/`,
+        installedVersion: installedVersion || null,
+        latestVersion: latest.name,
+        upToDate: installedVersion != null ? latestId === installedVersion : null,
+        // Spiget's download endpoint always serves whatever is currently
+        // latest, so there's no separate "old vs new" URL — same one either way.
+        updateDownloadUrl: installedVersion !== latestId ? `https://api.spiget.org/v2/resources/${slug}/download` : null,
+        updateFilename: row.filename,
+        updateVersion: latestId,
+        slug
+      };
+    }
+  } catch (e) {
+    return null;
+  }
+  return null;
 }
 
 // Public capability check so the search page knows whether to show
@@ -128,15 +210,21 @@ router.get('/mods/installed', requireAuth, async (req, res) => {
         updateFilename: latestFile ? latestFile.fileName : null
       });
     } else {
-      items.push({
-        filename: name,
-        matched: false,
-        source: null,
-        title: null,
-        installedVersion: null,
-        latestVersion: null,
-        upToDate: null
-      });
+      const provenanceRow = installs.get(name);
+      const provenance = provenanceRow ? await lookupProvenance(provenanceRow, getSetting('github_token')) : null;
+      if (provenance) {
+        items.push({ filename: name, matched: true, source: provenanceRow.source, ...provenance });
+      } else {
+        items.push({
+          filename: name,
+          matched: false,
+          source: null,
+          title: null,
+          installedVersion: null,
+          latestVersion: null,
+          upToDate: null
+        });
+      }
     }
   }
 
@@ -159,6 +247,7 @@ router.post('/mods/install', requireAuth, async (req, res) => {
   try {
     let url = downloadUrl;
     let name = filename;
+    let installedVersion = null;
     if (source === 'modrinth') {
       if (!slug) return res.status(400).json({ error: 'slug is required for Modrinth installs' });
       const file = await modrinth.getVersionsDownloadLink(slug);
@@ -172,6 +261,7 @@ router.post('/mods/install', requireAuth, async (req, res) => {
       if (!file) return res.status(404).json({ error: 'No downloadable file found for this project' });
       url = file.url;
       name = file.filename;
+      installedVersion = file.version;
     } else if (source === 'github') {
       if (!slug || !slug.includes('/')) return res.status(400).json({ error: 'slug (owner/repo) is required for GitHub installs' });
       const [owner, repo] = slug.split('/');
@@ -179,9 +269,20 @@ router.post('/mods/install', requireAuth, async (req, res) => {
       if (!file) return res.status(404).json({ error: 'No .jar release asset found for this repository' });
       url = file.url;
       name = file.filename;
+      installedVersion = file.version;
+    } else if (source === 'spigot' && slug) {
+      // Spigot's downloadUrl/filename already come from the frontend
+      // (search results carry a static per-resource URL) — this just also
+      // grabs the current version id so the update tracker has a baseline
+      // to compare a future check against.
+      const latest = await spigot.getLatestVersion(slug);
+      if (latest) installedVersion = String(latest.id);
     }
     if (!url || !name) return res.status(400).json({ error: 'downloadUrl and filename are required' });
     const saved = await modsFolder.downloadTo(name, url);
+    if (PROVENANCE_SOURCES.includes(source) && slug) {
+      installs.record(saved, source, slug, installedVersion);
+    }
     res.json({ ok: true, filename: saved });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -197,13 +298,21 @@ router.post('/mods/update', requireAuth, async (req, res) => {
   if (!(await modsFolder.isAvailable())) {
     return res.status(400).json({ error: `Mods folder (${modsFolder.MODS_DIR}) is not mounted or not writable` });
   }
-  const { oldFilename, downloadUrl, newFilename } = req.body || {};
+  const { oldFilename, downloadUrl, newFilename, newVersion } = req.body || {};
   if (!oldFilename || !downloadUrl || !newFilename) {
     return res.status(400).json({ error: 'oldFilename, downloadUrl, and newFilename are required' });
   }
   try {
+    // Carry the provenance row forward *before* the old file is deleted —
+    // for Hangar/Spigot/GitHub matches this is what keeps My Mods able to
+    // recognize the file again on the next scan instead of it silently
+    // reverting to "unmatched" the moment it gets renamed.
+    const provenanceRow = installs.get(oldFilename);
     const saved = await modsFolder.downloadTo(newFilename, downloadUrl);
     if (saved !== oldFilename) await modsFolder.deleteFile(oldFilename);
+    if (provenanceRow) {
+      installs.rename(oldFilename, saved, provenanceRow.source, provenanceRow.slug, newVersion || null);
+    }
     res.json({ ok: true, filename: saved });
   } catch (e) {
     res.status(500).json({ error: e.message });

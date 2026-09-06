@@ -4,7 +4,7 @@ Self-hosted Minecraft mod/addon search hub for Unraid.
 
 - Searches **Modrinth**, **CurseForge**, **PlanetMinecraft**, **9Minecraft**, **BetterBedrock**, **Hangar**, **SpigotMC**, **TLMods**, **MinecraftSkins.net**, **Polymart**, **GitHub**, and **MCreator.net**, merging results into one table (styled after LimeTorrents' layout: category pills + search bar, green nav, notice board, sidebar quick-browse)
 - **Browse by category** (Mods, Modpacks, Resource/Texture Packs, Data Packs, Shaders, Maps/Worlds, Bedrock Add-Ons, Server Plugins, Skins) without typing a search term — category tiles on the homepage and in the sidebar
-- **Notice board** on the homepage shows newly-posted mods/addons, pulled live from Modrinth's "newest" feed, 9Minecraft's blog homepage, and CurseForge's newest listings (if a key is configured)
+- **Notice board** on the homepage shows newly-posted mods/addons, pulled live from Modrinth's "newest" feed, 9Minecraft's blog homepage, and CurseForge's newest listings (if a key is configured) — "Show more" expands it from 8 to 25 per source
 - Every result and every mod detail page shows the **required game edition (Java or Bedrock)** and the **game version(s) it supports**
 - Mod detail page shows **download links**, **community discussion/comments** (via Reddit, since none of these sites expose a public reviews API) with **heuristic fake-review flags**, and **YouTube videos** about the mod with **download links auto-extracted from video descriptions**
 - **Search results and the notice board are cached** in SQLite (15 min by default, configurable, disable-able) so repeat searches are instant and the scraped sites aren't hit on every page load
@@ -122,7 +122,9 @@ Keys are stored in the SQLite database under `/data` (persisted via the Docker v
 
 This works for Modrinth, CurseForge, Hangar, SpigotMC, and GitHub (free/public files only — premium Spigot resources and GitHub repos with no `.jar` release asset have no direct link to install, and are reported as such rather than failing silently). PlanetMinecraft/9Minecraft/BetterBedrock/TLMods/MinecraftSkins.net/Polymart/MCreator.net don't expose a single reliable direct-file URL the way those do, so there's no Install button on results from those sources. Requires being logged into Admin config (the same session cookie covers both pages).
 
-The update checker's hash matching only covers Modrinth and CurseForge — Hangar and SpigotMC don't publish a public hash-lookup API, so a plugin installed from either shows as "unmatched" in My Mods *unless* it happens to also be published on Modrinth or CurseForge under the same file (matching is purely by file content, not by where you got it from, so cross-published plugins can still get identified that way).
+The update checker's *hash* matching only covers Modrinth and CurseForge — exact content hashing is source-agnostic (it identifies a file by what it *is*, not where it came from), so it works even on a jar you dropped in by hand or moved from another server.
+
+Hangar, SpigotMC, and GitHub don't publish a public hash-lookup API, so they can't be identified that way — but as of the "Install to my server" button on those three sources, this app records what it installed (filename → source + slug + version) in its own database, and the update checker follows up on that record instead: it re-asks the source what its current version is and compares. This only works for files installed *through this app's own button* — a Hangar/Spigot/GitHub jar dropped into the folder by hand still shows as "unmatched," since there's no record to look it up by (unless it happens to also be published on Modrinth or CurseForge under the same file, which still gets caught by the hash check first). Deleting and reinstalling a mod folder's contents from scratch, or moving files between machines, loses this tracking — the hash-based path for Modrinth/CurseForge has no such limitation.
 
 ## Notes / limitations
 

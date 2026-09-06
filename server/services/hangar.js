@@ -37,7 +37,11 @@ async function search(query, limit = 20) {
 // download URL for a given owner/slug. Hangar versions can publish per
 // platform (PAPER/WATERFALL/VELOCITY); this picks whichever platform the
 // version actually has a file for, preferring PAPER since that's the most
-// common target.
+// common target. Also returns the version's own `name` (e.g. "1.2.11") so
+// the update tracker can record what was installed and compare it against
+// this same call later — Hangar has no public hash-lookup API, so this
+// "what does the project say is newest right now" comparison is the only
+// update-checking available for anything installed from here.
 async function getLatestDownload(owner, slug) {
   const res = await fetch(`${BASE}/projects/${owner}/${slug}/versions?limit=1`, { headers: HEADERS });
   if (!res.ok) return null;
@@ -47,7 +51,7 @@ async function getLatestDownload(owner, slug) {
   const platform = latest.downloads.PAPER ? 'PAPER' : Object.keys(latest.downloads)[0];
   const download = latest.downloads[platform];
   if (!download || !download.downloadUrl || !download.fileInfo) return null;
-  return { url: download.downloadUrl, filename: download.fileInfo.name };
+  return { url: download.downloadUrl, filename: download.fileInfo.name, version: latest.name };
 }
 
 module.exports = { search, getLatestDownload };

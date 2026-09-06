@@ -54,4 +54,27 @@ async function search(query, limit = 20) {
   return data.map(mapResource);
 }
 
-module.exports = { search };
+// Used by the update tracker: Spiget's own resource metadata doesn't carry
+// a proper Minecraft-style version string, but its `/versions/latest`
+// endpoint returns a stable id + display name for whatever the current
+// download actually is. Spiget has no hash-lookup API, so comparing this id
+// against what was recorded at install time is the only update check
+// available for anything installed from here.
+async function getLatestVersion(resourceId) {
+  const res = await fetch(`${BASE}/resources/${resourceId}/versions/latest`, { headers: HEADERS });
+  if (!res.ok) return null;
+  const v = await res.json();
+  if (!v || v.id === undefined) return null;
+  return { id: v.id, name: v.name || String(v.id) };
+}
+
+// Used by the update tracker to re-fetch title/icon for a Spigot install
+// that wasn't matched by hash — search results aren't persisted anywhere,
+// so this is the only way back to a display name for a bare resource id.
+async function getResourceInfo(resourceId) {
+  const res = await fetch(`${BASE}/resources/${resourceId}?fields=name`, { headers: HEADERS });
+  if (!res.ok) return null;
+  return res.json();
+}
+
+module.exports = { search, getLatestVersion, getResourceInfo };

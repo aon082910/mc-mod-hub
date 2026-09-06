@@ -65,10 +65,14 @@ function selectPill(el, key) {
   activeCategory = key;
 }
 
-async function loadNotices() {
+const NOTICE_LIMIT_DEFAULT = 8;
+const NOTICE_LIMIT_EXPANDED = 25;
+let noticeExpanded = false;
+
+async function loadNotices(limit = NOTICE_LIMIT_DEFAULT) {
   const el = document.getElementById('noticeBox');
   try {
-    const res = await fetch('/api/notices');
+    const res = await fetch(`/api/notices?limit=${limit}`);
     const data = await res.json();
     if (!data.items || !data.items.length) {
       el.innerHTML = '<div class="empty">No recent posts found right now.</div>';
@@ -84,6 +88,15 @@ async function loadNotices() {
   } catch (e) {
     el.innerHTML = `<div class="error">Failed to load notice board: ${escapeHtml(e.message)}</div>`;
   }
+}
+
+// "limit" is per-source (see notices.js) — expanding asks each source for
+// more of its own newest items, not a page 2 of a shared feed.
+function toggleNoticeExpand() {
+  noticeExpanded = !noticeExpanded;
+  document.getElementById('noticeBox').classList.toggle('expanded', noticeExpanded);
+  document.getElementById('noticeExpandBtn').textContent = noticeExpanded ? 'Show less' : 'Show more';
+  loadNotices(noticeExpanded ? NOTICE_LIMIT_EXPANDED : NOTICE_LIMIT_DEFAULT);
 }
 
 function goHome() {
@@ -182,7 +195,7 @@ async function updateInstalledMod(item) {
     const res = await fetch('/api/mods/update', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ oldFilename: item.filename, downloadUrl: item.updateDownloadUrl, newFilename: item.updateFilename })
+      body: JSON.stringify({ oldFilename: item.filename, downloadUrl: item.updateDownloadUrl, newFilename: item.updateFilename, newVersion: item.updateVersion })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Update failed');

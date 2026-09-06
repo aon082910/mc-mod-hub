@@ -67,7 +67,10 @@ async function getLatestJarAsset(owner, repo, token = null) {
   const release = await res.json();
   const asset = (release.assets || []).find(a => a.name.toLowerCase().endsWith('.jar'));
   if (!asset) return null;
-  return { url: asset.browser_download_url, filename: asset.name };
+  // tag_name rides along for the update tracker — GitHub has no hash-lookup
+  // API, so "does the latest release still have this same tag" is the only
+  // update check available for anything installed from here.
+  return { url: asset.browser_download_url, filename: asset.name, version: release.tag_name };
 }
 
 module.exports = { search, getLatestJarAsset };

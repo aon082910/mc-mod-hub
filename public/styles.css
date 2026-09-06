@@ -127,7 +127,9 @@ a { color: var(--link); }
   padding: 8px 12px;
   max-height: 140px;
   overflow-y: auto;
+  transition: max-height 0.2s ease;
 }
+.notice-box.expanded { max-height: 420px; }
 .notice-item { font-size: 12px; padding: 4px 0; border-bottom: 1px dotted var(--border); display: flex; gap: 8px; align-items: center; }
 .notice-item:last-child { border-bottom: none; }
 .notice-new-tag { background: var(--danger); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px; flex-shrink: 0; }
