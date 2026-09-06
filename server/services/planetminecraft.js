@@ -48,6 +48,7 @@ async function search(query, limit = 20) {
       icon: icon ? (icon.startsWith('http') ? icon : `${BASE}${icon}`) : null,
       pageUrl: href.startsWith('http') ? href : `${BASE}${href}`,
       categories: [],
+      createdAt: null,
       updatedAt: null,
       edition,
       gameVersions

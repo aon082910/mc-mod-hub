@@ -43,6 +43,7 @@ function mapMod(mod) {
     downloadUrl: latestFile ? latestFile.downloadUrl : null,
     downloadFilename: latestFile ? latestFile.fileName : null,
     categories: (mod.categories || []).map(c => c.name),
+    createdAt: mod.dateCreated,
     updatedAt: mod.dateModified,
     // CurseForge only ever hosts Minecraft: Java Edition content.
     edition: 'java',

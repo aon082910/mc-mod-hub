@@ -51,6 +51,7 @@ async function fetchCatalog() {
       icon: icon ? (icon.startsWith('http') ? icon : `https:${icon}`) : null,
       pageUrl: `${BASE}${link}`,
       categories: [],
+      createdAt: null,
       updatedAt: null,
       // MCreator only targets Minecraft: Java Edition.
       edition: 'java',

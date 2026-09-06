@@ -1,9 +1,17 @@
 let currentResult = null;
 let currentResults = [];
+// The table on screen at any moment — currentResults after the active
+// filters and sort are applied. openDetail(i) indexes into this, not
+// currentResults, so a click always opens the row the user is actually
+// looking at regardless of sort/filter state.
+let displayedResults = [];
 let categories = [];
 let activeCategory = '';
 let modsStatus = { enabled: false, available: false };
 let isAdmin = false;
+
+let sortState = { column: 'downloads', dir: 'desc' };
+let resultFilters = { name: '', source: 'all', edition: 'all', version: '', minDownloads: '', postedAfter: '', updatedAfter: '' };
 
 // mc-addons.com and mcpedl.com aren't scraped into the unified results list
 // (see admin config for why) — both are still one click away here.
@@ -256,48 +264,179 @@ async function runSearch(q, categoryKey) {
     }
 
     currentResults = data.results || [];
-    countEl.textContent = `${currentResults.length} results`;
 
     if (!currentResults.length) {
+      countEl.textContent = '0 results';
+      document.getElementById('resultsFilters').innerHTML = '';
       resultsEl.innerHTML = '<div class="empty">No results found.</div>';
       return;
     }
 
-    resultsEl.innerHTML = `
-      <table class="results-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Source</th>
-            <th>Edition</th>
-            <th>Game Version</th>
-            <th>Downloads</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${currentResults.map((r, i) => `
-            <tr class="result-row" onclick="openDetail(${i})">
-              <td>
-                <div class="name-cell">
-                  <img src="${r.icon || ''}" onerror="this.style.visibility='hidden'">
-                  <div>
-                    <div class="title">${escapeHtml(r.title)}</div>
-                    <div class="desc">${escapeHtml(r.description || '')}</div>
-                  </div>
-                </div>
-              </td>
-              <td><span class="source-tag ${sourceCssClass(r.source)}">${escapeHtml(r.source)}</span></td>
-              <td>${editionBadge(r.edition)}</td>
-              <td>${versionTags(r.gameVersions)}</td>
-              <td>${r.downloads ? r.downloads.toLocaleString() : '—'}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    `;
+    // A fresh search resets the version/downloads/date free-text filters
+    // (their old values likely don't apply to a new result set at all) but
+    // keeps sort column/direction and the source/edition dropdowns, since
+    // "always show Bedrock first, sorted by newest" is a standing
+    // preference someone would want to carry across searches.
+    resultFilters.name = '';
+    resultFilters.version = '';
+    resultFilters.minDownloads = '';
+    resultFilters.postedAfter = '';
+    resultFilters.updatedAfter = '';
+
+    renderResultsFilters();
+    renderResultsTable();
   } catch (e) {
     resultsEl.innerHTML = `<div class="error">Search failed: ${escapeHtml(e.message)}</div>`;
   }
+}
+
+const RESULT_COLUMNS = [
+  { key: 'title', label: 'Name' },
+  { key: 'source', label: 'Source' },
+  { key: 'edition', label: 'Edition' },
+  { key: 'version', label: 'Game Version' },
+  { key: 'downloads', label: 'Downloads' },
+  { key: 'createdAt', label: 'Posted' },
+  { key: 'updatedAt', label: 'Updated' }
+];
+
+function renderResultsFilters() {
+  const el = document.getElementById('resultsFilters');
+  const sources = [...new Set(currentResults.map(r => r.source))].sort();
+  el.innerHTML = `
+    <div class="filters-bar">
+      <input type="text" placeholder="Filter by name…" value="${escapeHtml(resultFilters.name)}" oninput="setFilter('name', this.value)">
+      <select onchange="setFilter('source', this.value)">
+        <option value="all">All sources</option>
+        ${sources.map(s => `<option value="${escapeHtml(s)}" ${resultFilters.source === s ? 'selected' : ''}>${escapeHtml(s)}</option>`).join('')}
+      </select>
+      <select onchange="setFilter('edition', this.value)">
+        <option value="all" ${resultFilters.edition === 'all' ? 'selected' : ''}>All editions</option>
+        <option value="java" ${resultFilters.edition === 'java' ? 'selected' : ''}>Java</option>
+        <option value="bedrock" ${resultFilters.edition === 'bedrock' ? 'selected' : ''}>Bedrock</option>
+        <option value="unknown" ${resultFilters.edition === 'unknown' ? 'selected' : ''}>Unknown</option>
+      </select>
+      <input type="text" placeholder="Version contains…" value="${escapeHtml(resultFilters.version)}" oninput="setFilter('version', this.value)">
+      <input type="number" min="0" placeholder="Min downloads" value="${escapeHtml(resultFilters.minDownloads)}" oninput="setFilter('minDownloads', this.value)">
+      <label class="filter-date-label">Posted after <input type="date" value="${escapeHtml(resultFilters.postedAfter)}" onchange="setFilter('postedAfter', this.value)"></label>
+      <label class="filter-date-label">Updated after <input type="date" value="${escapeHtml(resultFilters.updatedAfter)}" onchange="setFilter('updatedAfter', this.value)"></label>
+      <button class="btn secondary small" onclick="resetResultFilters()">Reset</button>
+    </div>
+  `;
+}
+
+function setFilter(key, value) {
+  resultFilters[key] = value;
+  renderResultsTable();
+}
+
+function resetResultFilters() {
+  resultFilters = { name: '', source: 'all', edition: 'all', version: '', minDownloads: '', postedAfter: '', updatedAfter: '' };
+  renderResultsFilters();
+  renderResultsTable();
+}
+
+function setSort(column) {
+  if (sortState.column === column) {
+    sortState.dir = sortState.dir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortState.column = column;
+    // Text-ish columns read more naturally starting A→Z; numeric/date
+    // columns read more naturally starting with the biggest/newest first.
+    sortState.dir = (column === 'title' || column === 'source' || column === 'edition' || column === 'version') ? 'asc' : 'desc';
+  }
+  renderResultsTable();
+}
+
+function sortValue(r, column) {
+  switch (column) {
+    case 'title': return (r.title || '').toLowerCase();
+    case 'source': return r.source || '';
+    case 'edition': return r.edition || '';
+    case 'version': return (r.gameVersions && r.gameVersions[0]) || '';
+    case 'downloads': return r.downloads;
+    case 'createdAt': return r.createdAt ? new Date(r.createdAt).getTime() : null;
+    case 'updatedAt': return r.updatedAt ? new Date(r.updatedAt).getTime() : null;
+    default: return null;
+  }
+}
+
+function renderResultsTable() {
+  const resultsEl = document.getElementById('results');
+  const countEl = document.getElementById('resultsCount');
+
+  const nameQuery = resultFilters.name.trim().toLowerCase();
+  const versionQuery = resultFilters.version.trim().toLowerCase();
+  const minDownloads = resultFilters.minDownloads !== '' ? Number(resultFilters.minDownloads) : null;
+  const postedAfter = resultFilters.postedAfter ? new Date(resultFilters.postedAfter).getTime() : null;
+  const updatedAfter = resultFilters.updatedAfter ? new Date(resultFilters.updatedAfter).getTime() : null;
+
+  let filtered = currentResults.filter(r => {
+    if (nameQuery && !(r.title || '').toLowerCase().includes(nameQuery)) return false;
+    if (resultFilters.source !== 'all' && r.source !== resultFilters.source) return false;
+    if (resultFilters.edition === 'unknown' ? !!r.edition : (resultFilters.edition !== 'all' && r.edition !== resultFilters.edition)) return false;
+    if (versionQuery && !(r.gameVersions || []).some(v => v.toLowerCase().includes(versionQuery))) return false;
+    if (minDownloads != null && !(r.downloads >= minDownloads)) return false;
+    if (postedAfter != null && !(r.createdAt && new Date(r.createdAt).getTime() >= postedAfter)) return false;
+    if (updatedAfter != null && !(r.updatedAt && new Date(r.updatedAt).getTime() >= updatedAfter)) return false;
+    return true;
+  });
+
+  const { column, dir } = sortState;
+  const mul = dir === 'asc' ? 1 : -1;
+  filtered.sort((a, b) => {
+    const va = sortValue(a, column);
+    const vb = sortValue(b, column);
+    // Missing values always sort to the bottom regardless of direction —
+    // "unknown" isn't meaningfully "less than" or "greater than" anything.
+    if (va == null && vb == null) return 0;
+    if (va == null) return 1;
+    if (vb == null) return -1;
+    if (va < vb) return -1 * mul;
+    if (va > vb) return 1 * mul;
+    return 0;
+  });
+
+  displayedResults = filtered;
+  countEl.textContent = `${filtered.length} of ${currentResults.length} results`;
+
+  if (!filtered.length) {
+    resultsEl.innerHTML = '<div class="empty">No results match the current filters.</div>';
+    return;
+  }
+
+  const arrow = col => sortState.column === col ? (sortState.dir === 'asc' ? ' ▲' : ' ▼') : '';
+
+  resultsEl.innerHTML = `
+    <table class="results-table">
+      <thead>
+        <tr>
+          ${RESULT_COLUMNS.map(c => `<th class="sortable" onclick="setSort('${c.key}')">${c.label}${arrow(c.key)}</th>`).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map((r, i) => `
+          <tr class="result-row" onclick="openDetail(${i})">
+            <td>
+              <div class="name-cell">
+                <img src="${r.icon || ''}" onerror="this.style.visibility='hidden'">
+                <div>
+                  <div class="title">${escapeHtml(r.title)}</div>
+                  <div class="desc">${escapeHtml(r.description || '')}</div>
+                </div>
+              </div>
+            </td>
+            <td><span class="source-tag ${sourceCssClass(r.source)}">${escapeHtml(r.source)}</span></td>
+            <td>${editionBadge(r.edition)}</td>
+            <td>${versionTags(r.gameVersions)}</td>
+            <td>${r.downloads ? r.downloads.toLocaleString() : '—'}</td>
+            <td>${formatDate(r.createdAt) || '<span class="hint">—</span>'}</td>
+            <td>${formatDate(r.updatedAt) || '<span class="hint">—</span>'}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
 }
 
 function editionBadge(edition) {
@@ -319,7 +458,7 @@ function renderOtherSites(q) {
 }
 
 function openDetail(i) {
-  currentResult = currentResults[i];
+  currentResult = displayedResults[i];
   document.getElementById('detail').style.display = 'block';
   document.querySelector('.search-row').style.display = 'none';
   document.querySelector('.main-nav').style.display = 'none';
@@ -376,6 +515,7 @@ function loadOverview(r) {
         ${metaRow('Edition', editionBadge(r.edition))}
         ${metaRow('Game version(s)', r.gameVersions && r.gameVersions.length ? versionTags(r.gameVersions) : null)}
         ${metaRow('Downloads', r.downloads != null ? r.downloads.toLocaleString() : null)}
+        ${metaRow('First posted', formatDate(r.createdAt))}
         ${metaRow('Last updated', formatDate(r.updatedAt))}
         ${metaRow('Tags / categories', tags.length ? tags.map(t => `<span class="version-tag">${escapeHtml(t)}</span>`).join('') : null)}
         ${r.price != null ? metaRow('Price', r.price > 0 ? `$${r.price.toFixed(2)}` : 'Free') : ''}

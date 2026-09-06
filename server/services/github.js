@@ -35,6 +35,7 @@ function mapRepo(r) {
     icon: r.owner ? r.owner.avatar_url : null,
     pageUrl: r.html_url,
     categories: r.topics || [],
+    createdAt: r.created_at,
     updatedAt: r.pushed_at,
     // GitHub hosts every kind of Minecraft project under the sun; there's no
     // structured edition/version field on a repo the way there is on

@@ -18,6 +18,7 @@ function mapProject(p) {
     icon: p.avatarUrl,
     pageUrl: `https://hangar.papermc.io/${p.namespace.owner}/${p.namespace.slug}`,
     categories: p.category ? [p.category] : [],
+    createdAt: p.createdAt,
     updatedAt: p.lastUpdated,
     // Hangar only hosts Minecraft: Java Edition server plugins.
     edition: 'java',

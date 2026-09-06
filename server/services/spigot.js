@@ -34,6 +34,7 @@ function mapResource(r) {
     downloadUrl: r.premium ? null : `${BASE}/resources/${r.id}/download`,
     downloadFilename: r.premium ? null : filename,
     categories: [],
+    createdAt: r.releaseDate ? new Date(r.releaseDate * 1000).toISOString() : null,
     updatedAt: r.updateDate ? new Date(r.updateDate * 1000).toISOString() : null,
     // SpigotMC only hosts Minecraft: Java Edition server plugins.
     edition: 'java',
@@ -46,7 +47,7 @@ async function search(query, limit = 20) {
   // base64 copy of the image alongside its URL, which would bloat every
   // search response for no reason since the icon is built from the
   // resource id via a separate, dedicated endpoint anyway (see mapResource).
-  const url = `${BASE}/search/resources/${encodeURIComponent(query)}?size=${limit}&fields=name,tag,downloads,premium,testedVersions,updateDate`;
+  const url = `${BASE}/search/resources/${encodeURIComponent(query)}?size=${limit}&fields=name,tag,downloads,premium,testedVersions,updateDate,releaseDate`;
   const res = await fetch(url, { headers: HEADERS });
   if (!res.ok) throw new Error(`Spigot (Spiget) search failed: ${res.status}`);
   const data = await res.json();

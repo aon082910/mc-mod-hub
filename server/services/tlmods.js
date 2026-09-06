@@ -43,6 +43,7 @@ function parseCards($, limit) {
       icon: icon || null,
       pageUrl,
       categories: [],
+      createdAt: null,
       updatedAt: null,
       // TLauncher is a Java Edition alternative launcher; it doesn't carry
       // Bedrock content at all.

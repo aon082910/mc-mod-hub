@@ -30,7 +30,11 @@ function mapResult(r) {
     icon: r.thumbnailURL || null,
     pageUrl: r.url,
     categories: [],
-    updatedAt: null,
+    createdAt: r.creationTime ? new Date(r.creationTime * 1000).toISOString() : null,
+    // The search endpoint does carry a lastUpdateTime field (unlike downloads,
+    // which it omits entirely) — it's just frequently null for resources that
+    // haven't shipped an update since being listed, not a missing field.
+    updatedAt: r.lastUpdateTime ? new Date(r.lastUpdateTime * 1000).toISOString() : null,
     // Polymart only serves the Spigot/Paper/Bukkit plugin ecosystem — Java
     // Edition server software, no Bedrock content.
     edition: 'java',

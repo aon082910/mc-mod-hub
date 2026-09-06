@@ -157,6 +157,20 @@ table.results-table th {
   text-align: left; font-size: 12px; color: var(--muted); font-weight: 600;
   padding: 8px 10px; border-bottom: 2px solid var(--green-dark); background: var(--green-pale);
 }
+table.results-table th.sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+table.results-table th.sortable:hover { color: var(--text); }
+
+.filters-bar {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 6px;
+  padding: 10px; margin-bottom: 10px;
+}
+.filters-bar input[type="text"], .filters-bar input[type="number"], .filters-bar select, .filters-bar input[type="date"] {
+  padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 12px; background: #fff; color: var(--text);
+}
+.filters-bar input[type="text"] { width: 140px; }
+.filters-bar input[type="number"] { width: 100px; }
+.filter-date-label { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
 table.results-table td { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
 table.results-table tr.result-row { cursor: pointer; }
 table.results-table tr.result-row:hover { background: var(--green-pale); }

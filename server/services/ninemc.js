@@ -43,6 +43,7 @@ function parseCards($, root, limit) {
       icon: icon || null,
       pageUrl: href,
       categories: isMod ? ['mod'] : [],
+      createdAt: null,
       updatedAt: null,
       edition,
       gameVersions

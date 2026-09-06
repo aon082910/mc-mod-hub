@@ -53,6 +53,7 @@ async function fetchCatalog() {
       icon,
       pageUrl: link.startsWith('http') ? link : `${BASE}${link}`,
       categories: [],
+      createdAt: null,
       updatedAt: null,
       // BetterBedrock only ever hosts Minecraft: Bedrock Edition content; the
       // catalog page doesn't list a specific required game version per item.

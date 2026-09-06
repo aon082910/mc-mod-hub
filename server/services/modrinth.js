@@ -18,6 +18,7 @@ function mapHit(hit) {
     icon: hit.icon_url,
     pageUrl: `https://modrinth.com/${hit.project_type || 'mod'}/${hit.slug}`,
     categories: hit.categories || [],
+    createdAt: hit.date_created,
     updatedAt: hit.date_modified,
     // Modrinth only ever hosts Minecraft: Java Edition content.
     edition: 'java',

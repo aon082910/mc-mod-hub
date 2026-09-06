@@ -42,6 +42,7 @@ function parseCards($, limit) {
       icon: icon ? `${BASE}${icon}` : null,
       pageUrl: `${BASE}${href}`,
       categories: [],
+      createdAt: null,
       updatedAt: null,
       // Skins aren't Java/Bedrock-locked content the way mods are.
       edition: null,
