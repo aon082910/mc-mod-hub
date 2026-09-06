@@ -317,20 +317,60 @@ function openDetail(i) {
     <img src="${r.icon || ''}" onerror="this.style.visibility='hidden'">
     <div>
       <h2>${escapeHtml(r.title)}</h2>
-      <p style="margin:0;color:var(--muted)">${escapeHtml(r.description || '')}</p>
+      <p style="margin:0;color:var(--muted)">${r.description ? escapeHtml(r.description) : `<span class="hint">No description provided by ${escapeHtml(r.source)}</span>`}</p>
       <div class="badges">
         <span class="source-tag ${sourceCssClass(r.source)}">${escapeHtml(r.source)}</span>
         ${editionBadge(r.edition)}
         ${versionTags(r.gameVersions)}
-        <span class="stat">${(r.downloads || 0).toLocaleString()} downloads</span>
+        ${r.downloads != null ? `<span class="stat">${r.downloads.toLocaleString()} downloads</span>` : ''}
       </div>
     </div>
   `;
 
+  loadOverview(r);
   loadDownloads(r);
-  switchTab('downloads');
+  switchTab('overview');
   document.getElementById('tab-reviews').dataset.loaded = '';
   document.getElementById('tab-videos').dataset.loaded = '';
+}
+
+// Formats an ISO timestamp (or unix-seconds number, which a couple of
+// sources use) into a plain readable date, or null if it can't be parsed —
+// callers fall back to an honest "not provided" line rather than showing
+// "Invalid Date".
+function formatDate(value) {
+  if (!value) return null;
+  const d = typeof value === 'number' ? new Date(value * (value < 1e12 ? 1000 : 1)) : new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+}
+
+// A row of metadata that's honest about missing data: sources genuinely
+// differ in what they publish (an official API vs. a scraped listing page),
+// so a field with nothing to show says so instead of rendering blank.
+function metaRow(label, value) {
+  return `<div class="meta-row"><span class="meta-label">${escapeHtml(label)}</span><span>${value || '<span class="hint">Not provided by this source</span>'}</span></div>`;
+}
+
+function loadOverview(r) {
+  const el = document.getElementById('tab-overview');
+  const tags = (r.categories || []).filter(Boolean);
+  el.innerHTML = `
+    <div class="panel">
+      <h3 style="margin-top:0">About this ${escapeHtml(r.source)} listing</h3>
+      <p>${r.description ? escapeHtml(r.description) : `<span class="hint">${escapeHtml(r.source)} doesn't provide a description for this result.</span>`}</p>
+      <div class="meta-grid">
+        ${metaRow('Author', r.author ? escapeHtml(r.author) : null)}
+        ${metaRow('Edition', editionBadge(r.edition))}
+        ${metaRow('Game version(s)', r.gameVersions && r.gameVersions.length ? versionTags(r.gameVersions) : null)}
+        ${metaRow('Downloads', r.downloads != null ? r.downloads.toLocaleString() : null)}
+        ${metaRow('Last updated', formatDate(r.updatedAt))}
+        ${metaRow('Tags / categories', tags.length ? tags.map(t => `<span class="version-tag">${escapeHtml(t)}</span>`).join('') : null)}
+        ${r.price != null ? metaRow('Price', r.price > 0 ? `$${r.price.toFixed(2)}` : 'Free') : ''}
+        ${metaRow('Source', `<span class="source-tag ${sourceCssClass(r.source)}">${escapeHtml(r.source)}</span>`)}
+      </div>
+      <a class="btn secondary" style="margin-top:12px" href="${r.pageUrl}" target="_blank" rel="noopener">Open full project page ↗</a>
+    </div>
+  `;
 }
 
 function closeDetail() {

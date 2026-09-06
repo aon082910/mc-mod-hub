@@ -106,12 +106,14 @@
     <div id="detailHeader" class="detail-header" style="margin-top:12px"></div>
 
     <div class="tabs">
-      <div class="tab active" data-tab="downloads" onclick="switchTab('downloads')">Downloads</div>
+      <div class="tab active" data-tab="overview" onclick="switchTab('overview')">Overview</div>
+      <div class="tab" data-tab="downloads" onclick="switchTab('downloads')">Downloads</div>
       <div class="tab" data-tab="reviews" onclick="switchTab('reviews')">Reviews / Comments</div>
       <div class="tab" data-tab="videos" onclick="switchTab('videos')">YouTube</div>
     </div>
 
-    <div id="tab-downloads" class="tab-content"></div>
+    <div id="tab-overview" class="tab-content"></div>
+    <div id="tab-downloads" class="tab-content" style="display:none"></div>
     <div id="tab-reviews" class="tab-content" style="display:none"></div>
     <div id="tab-videos" class="tab-content" style="display:none"></div>
   </div>

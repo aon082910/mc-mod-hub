@@ -223,6 +223,10 @@ table.results-table tr.result-row:hover { background: var(--green-pale); }
 .hint { color: var(--muted); font-size: 12px; margin-top: 4px; }
 .stat { font-size: 12px; color: var(--muted); }
 
+.meta-grid { display: grid; grid-template-columns: 160px 1fr; row-gap: 10px; column-gap: 12px; margin-top: 12px; }
+.meta-row { display: contents; }
+.meta-label { color: var(--muted); font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; padding-top: 2px; }
+
 .form-row { margin-bottom: 14px; }
 .form-row label { display: block; margin-bottom: 6px; font-size: 13px; color: var(--muted); }
 .form-row input[type=text], .form-row input[type=password], .form-row input[type=number] {
