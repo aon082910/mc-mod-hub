@@ -37,6 +37,7 @@ async function loadSettings() {
   const s = await res.json();
   document.getElementById('curseforge_api_key').value = s.curseforge_api_key || '';
   document.getElementById('youtube_api_key').value = s.youtube_api_key || '';
+  document.getElementById('github_token').value = s.github_token || '';
   document.getElementById('enable_modrinth').checked = s.enable_modrinth === '1';
   document.getElementById('enable_curseforge').checked = s.enable_curseforge === '1';
   document.getElementById('enable_planetminecraft').checked = s.enable_planetminecraft === '1';
@@ -46,6 +47,8 @@ async function loadSettings() {
   document.getElementById('enable_spigot').checked = s.enable_spigot === '1';
   document.getElementById('enable_tlmods').checked = s.enable_tlmods === '1';
   document.getElementById('enable_minecraftskins').checked = s.enable_minecraftskins === '1';
+  document.getElementById('enable_polymart').checked = s.enable_polymart === '1';
+  document.getElementById('enable_github').checked = s.enable_github === '1';
   document.getElementById('enable_youtube').checked = s.enable_youtube === '1';
   document.getElementById('enable_reddit').checked = s.enable_reddit === '1';
   document.getElementById('results_per_source').value = s.results_per_source || 20;
@@ -76,6 +79,7 @@ async function saveSettings() {
   const body = {
     curseforge_api_key: document.getElementById('curseforge_api_key').value,
     youtube_api_key: document.getElementById('youtube_api_key').value,
+    github_token: document.getElementById('github_token').value,
     enable_modrinth: document.getElementById('enable_modrinth').checked ? '1' : '0',
     enable_curseforge: document.getElementById('enable_curseforge').checked ? '1' : '0',
     enable_planetminecraft: document.getElementById('enable_planetminecraft').checked ? '1' : '0',
@@ -85,6 +89,8 @@ async function saveSettings() {
     enable_spigot: document.getElementById('enable_spigot').checked ? '1' : '0',
     enable_tlmods: document.getElementById('enable_tlmods').checked ? '1' : '0',
     enable_minecraftskins: document.getElementById('enable_minecraftskins').checked ? '1' : '0',
+    enable_polymart: document.getElementById('enable_polymart').checked ? '1' : '0',
+    enable_github: document.getElementById('enable_github').checked ? '1' : '0',
     enable_youtube: document.getElementById('enable_youtube').checked ? '1' : '0',
     enable_reddit: document.getElementById('enable_reddit').checked ? '1' : '0',
     results_per_source: document.getElementById('results_per_source').value,

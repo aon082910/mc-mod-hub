@@ -34,6 +34,9 @@ const DEFAULTS = {
   enable_spigot: '1',
   enable_tlmods: '1',
   enable_minecraftskins: '1',
+  enable_polymart: '1',
+  enable_github: '1',
+  github_token: '',
   results_per_source: '20',
   cache_ttl_seconds: '900',
   enable_mods_folder: '0'

@@ -359,6 +359,7 @@ function switchTab(name) {
 function canInstallToServer(r) {
   if (!isAdmin || !modsStatus.enabled || !modsStatus.available) return false;
   if (r.source === 'modrinth' || r.source === 'hangar') return true; // resolved server-side from slug
+  if (r.source === 'github') return !!(r.slug && r.slug.includes('/')); // resolved server-side from owner/repo, but only if a release with a .jar asset actually exists — checked at install time
   if (r.source === 'curseforge' || r.source === 'spigot') return !!(r.downloadUrl && r.downloadFilename);
   return false; // scraped sources have no reliable single-file download URL to install
 }
@@ -383,7 +384,7 @@ async function installToServer() {
   status.textContent = 'Installing…';
   status.style.color = '';
   try {
-    const body = (r.source === 'modrinth' || r.source === 'hangar')
+    const body = (r.source === 'modrinth' || r.source === 'hangar' || r.source === 'github')
       ? { source: r.source, slug: r.slug }
       : { source: r.source, downloadUrl: r.downloadUrl, filename: r.downloadFilename };
     const res = await fetch('/api/mods/install', {

@@ -38,16 +38,21 @@ router.get('/settings', requireAuth, (req, res) => {
   // Mask secret keys but tell the frontend whether one is set.
   safe.curseforge_api_key_set = !!settings.curseforge_api_key;
   safe.youtube_api_key_set = !!settings.youtube_api_key;
+  safe.github_token_set = !!settings.github_token;
   safe.curseforge_api_key = settings.curseforge_api_key ? '••••••••' : '';
   safe.youtube_api_key = settings.youtube_api_key ? '••••••••' : '';
+  safe.github_token = settings.github_token ? '••••••••' : '';
   res.json(safe);
 });
 
+const MASKED_KEYS = ['curseforge_api_key', 'youtube_api_key', 'github_token'];
+
 const EDITABLE_KEYS = [
-  'curseforge_api_key', 'youtube_api_key',
+  'curseforge_api_key', 'youtube_api_key', 'github_token',
   'enable_modrinth', 'enable_curseforge', 'enable_youtube', 'enable_reddit',
   'enable_planetminecraft', 'enable_9minecraft', 'enable_betterbedrock',
   'enable_hangar', 'enable_spigot', 'enable_tlmods', 'enable_minecraftskins',
+  'enable_polymart', 'enable_github',
   'results_per_source', 'cache_ttl_seconds', 'enable_mods_folder'
 ];
 
@@ -57,7 +62,7 @@ router.post('/settings', requireAuth, (req, res) => {
     if (body[key] === undefined) continue;
     // Skip masked placeholder values so saving the form without touching
     // the key field doesn't wipe out an already-configured API key.
-    if ((key === 'curseforge_api_key' || key === 'youtube_api_key') && body[key] === '••••••••') continue;
+    if (MASKED_KEYS.includes(key) && body[key] === '••••••••') continue;
     setSetting(key, body[key]);
   }
   res.json({ ok: true });

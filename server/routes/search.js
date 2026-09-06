@@ -10,12 +10,15 @@ const hangar = require('../services/hangar');
 const spigot = require('../services/spigot');
 const tlmods = require('../services/tlmods');
 const minecraftskins = require('../services/minecraftskins');
+const polymart = require('../services/polymart');
+const github = require('../services/github');
 const { getCategory } = require('../services/categories');
 const { getCached, setCached } = require('../services/cache');
 
 const SOURCE_KEYS = [
   'enable_modrinth', 'enable_curseforge', 'enable_planetminecraft', 'enable_9minecraft',
-  'enable_betterbedrock', 'enable_hangar', 'enable_spigot', 'enable_tlmods', 'enable_minecraftskins'
+  'enable_betterbedrock', 'enable_hangar', 'enable_spigot', 'enable_tlmods', 'enable_minecraftskins',
+  'enable_polymart', 'enable_github'
 ];
 
 router.get('/search', async (req, res) => {
@@ -72,7 +75,10 @@ router.get('/search', async (req, res) => {
         .catch(e => { errors.push({ source: 'planetminecraft', message: e.message }); return []; })
     );
   }
-  if (includePlanetAndNineMc && scrapeQuery && getSetting('enable_9minecraft') === '1') {
+  // Skins gets a narrow 9Minecraft-only override (see categories.js) since
+  // its listing template covers skins too, unlike PlanetMinecraft's.
+  const include9minecraft = includePlanetAndNineMc || (category && category.include9minecraft);
+  if (include9minecraft && scrapeQuery && getSetting('enable_9minecraft') === '1') {
     tasks.push(
       ninemc.search(scrapeQuery, limit)
         .catch(e => { errors.push({ source: '9minecraft', message: e.message }); return []; })
@@ -116,6 +122,20 @@ router.get('/search', async (req, res) => {
     tasks.push(
       minecraftskins.search(scrapeQuery, limit)
         .catch(e => { errors.push({ source: 'minecraftskins', message: e.message }); return []; })
+    );
+  }
+
+  if (scrapeQuery && getSetting('enable_polymart') === '1' && (!category || category.includePolymart)) {
+    tasks.push(
+      polymart.search(scrapeQuery, limit)
+        .catch(e => { errors.push({ source: 'polymart', message: e.message }); return []; })
+    );
+  }
+
+  if (scrapeQuery && getSetting('enable_github') === '1' && !(category && category.excludeGithub)) {
+    tasks.push(
+      github.search(scrapeQuery, limit, getSetting('github_token'))
+        .catch(e => { errors.push({ source: 'github', message: e.message }); return []; })
     );
   }
 

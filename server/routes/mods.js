@@ -6,6 +6,7 @@ const modsFolder = require('../services/modsFolder');
 const modrinth = require('../services/modrinth');
 const curseforge = require('../services/curseforge');
 const hangar = require('../services/hangar');
+const github = require('../services/github');
 const { sha1Hex, curseforgeFingerprint } = require('../services/hashing');
 
 function featureEnabled() {
@@ -142,12 +143,12 @@ router.get('/mods/installed', requireAuth, async (req, res) => {
   res.json({ items, errors });
 });
 
-// Modrinth and Hangar search results don't carry a direct file URL (their
-// search APIs don't expose one), so for those sources this resolves the
-// latest file itself from the project slug rather than requiring the
-// frontend to know each site's download URL scheme. CurseForge and Spigot
-// results already carry downloadUrl/downloadFilename directly from search,
-// so those are used as-is.
+// Modrinth, Hangar, and GitHub search results don't carry a direct file URL
+// (their search APIs don't expose one), so for those sources this resolves
+// the latest file itself from the project slug/owner-repo rather than
+// requiring the frontend to know each site's download URL scheme.
+// CurseForge and Spigot results already carry downloadUrl/downloadFilename
+// directly from search, so those are used as-is.
 router.post('/mods/install', requireAuth, async (req, res) => {
   if (!featureEnabled()) return res.status(400).json({ error: 'Mods folder feature is disabled in admin config' });
   if (!(await modsFolder.isAvailable())) {
@@ -169,6 +170,13 @@ router.post('/mods/install', requireAuth, async (req, res) => {
       const [owner, projectSlug] = slug.split('/');
       const file = await hangar.getLatestDownload(owner, projectSlug);
       if (!file) return res.status(404).json({ error: 'No downloadable file found for this project' });
+      url = file.url;
+      name = file.filename;
+    } else if (source === 'github') {
+      if (!slug || !slug.includes('/')) return res.status(400).json({ error: 'slug (owner/repo) is required for GitHub installs' });
+      const [owner, repo] = slug.split('/');
+      const file = await github.getLatestJarAsset(owner, repo, getSetting('github_token'));
+      if (!file) return res.status(404).json({ error: 'No .jar release asset found for this repository' });
       url = file.url;
       name = file.filename;
     }

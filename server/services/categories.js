@@ -22,6 +22,12 @@
 //    edition-locked, no "install to server" concept) and the site has no
 //    real keyword search (see minecraftskins.js) — it only ever contributes
 //    to the "skins" category, never a plain keyword search.
+//  - Polymart: a real Spigot/Paper plugin marketplace, same "plugins-only"
+//    treatment as Hangar/Spigot (`includePolymart`).
+//  - GitHub: searched (via `topic:minecraft`) across every category except
+//    Skins — nobody hosts a cosmetic skin file as a GitHub repo — since a
+//    huge amount of smaller mods/plugins have no listing anywhere else.
+//    `excludeGithub` opts a category out; every other category defaults in.
 //
 // Minecraft: Java Edition and Bedrock Edition content is not interchangeable
 // (different mod formats, different marketplaces) — Modrinth and CurseForge
@@ -110,6 +116,7 @@ const CATEGORIES = [
     includeBetterBedrock: false,
     includeHangar: true,
     includeSpigot: true,
+    includePolymart: true,
     excludePlanetAndNineMc: true,
     tlmodsPath: null
   },
@@ -123,7 +130,16 @@ const CATEGORIES = [
     includeBetterBedrock: false,
     includeHangar: false,
     includeSpigot: false,
+    // PlanetMinecraft's scraper only ever reads its /mods/ search page (see
+    // planetminecraft.js), which doesn't cover its separate /skins/ section
+    // at all — enabling it here would return mod results mislabeled as
+    // skins, not real skin content. 9Minecraft's homepage/search template is
+    // shared across all its content types, though, and does carry real skin
+    // posts (verified), so it gets a narrow, skins-only override instead of
+    // flipping the general PlanetMinecraft+9Minecraft toggle for everyone.
     excludePlanetAndNineMc: true,
+    include9minecraft: true,
+    excludeGithub: true,
     javaSourcesExcluded: true,
     tlmodsPath: null,
     includeMinecraftSkins: true
