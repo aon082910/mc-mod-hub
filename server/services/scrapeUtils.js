@@ -10,12 +10,23 @@ const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
 // while wget (present in the node:alpine base image via busybox) passes —
 // verified directly against the container. Using wget everywhere here keeps
 // all scrapers on the client fingerprint that's actually known to work.
+//
+// A same-origin Referer is also always sent. PlanetMinecraft's WAF started
+// specifically blocking `/mods/?keywords=` (its own real search parameter —
+// confirmed via its own search form) with a 403 whenever a request arrives
+// with no Referer at all, while the exact same request with a same-site
+// Referer succeeds with real results — verified directly. This is a
+// deliberate rule about that one parameter, not the general bot-management
+// flakiness the retry logic below handles; sending a same-origin Referer on
+// every scraped request costs nothing for the sites that don't check it.
 function wgetOnce(url, timeoutMs) {
+  const referer = new URL(url).origin + '/';
   return new Promise((resolve, reject) => {
     execFile('wget', [
       '-qO-',
       '--header', `User-Agent: ${BROWSER_UA}`,
       '--header', 'Accept: text/html,application/xhtml+xml',
+      '--header', `Referer: ${referer}`,
       '--timeout', String(Math.ceil(timeoutMs / 1000)),
       '--tries', '1',
       url
