@@ -11,14 +11,14 @@ const BROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36
 // verified directly against the container. Using wget everywhere here keeps
 // all scrapers on the client fingerprint that's actually known to work.
 //
-// A same-origin Referer is also always sent. PlanetMinecraft's WAF started
-// specifically blocking `/mods/?keywords=` (its own real search parameter —
-// confirmed via its own search form) with a 403 whenever a request arrives
-// with no Referer at all, while the exact same request with a same-site
-// Referer succeeds with real results — verified directly. This is a
-// deliberate rule about that one parameter, not the general bot-management
-// flakiness the retry logic below handles; sending a same-origin Referer on
-// every scraped request costs nothing for the sites that don't check it.
+// A same-origin Referer is also always sent, on the reasoning that it looks
+// more like a real browser navigation — worth noting honestly that a closer
+// look disproved the original theory here (that PlanetMinecraft's WAF
+// specifically required one on `/mods/?keywords=`): re-tested the exact same
+// request repeatedly with and without a Referer and got 200 both ways, so
+// the earlier "fixed it" read was just a lucky timing window, not a real
+// fix. Left in anyway since it's harmless and can't hurt; the actual
+// behavior is the plain probabilistic Cloudflare challenge described below.
 function wgetOnce(url, timeoutMs) {
   const referer = new URL(url).origin + '/';
   return new Promise((resolve, reject) => {
@@ -37,13 +37,24 @@ function wgetOnce(url, timeoutMs) {
   });
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // A couple of these sites (PlanetMinecraft in particular) sit behind
 // Cloudflare bot management that challenges some fraction of requests even
-// with an identical client/headers — retrying a couple of times clears most
-// of those transient 403s without adding much latency to a real user search.
-async function fetchHtml(url, timeoutMs = 10000, retries = 2) {
+// with an identical client/headers/IP — the exact same request can 200 one
+// second and 403 the next with nothing distinguishing them from outside.
+// Retrying immediately often just re-hits the same rejected window, so each
+// retry waits a bit longer (400ms, then 900ms) before trying again — cheap
+// insurance against a transient block without adding much latency to a real
+// search, though it's still fundamentally a "roll the dice again" mitigation,
+// not a fix, since this behavior is on PlanetMinecraft's end and outside
+// this app's control.
+async function fetchHtml(url, timeoutMs = 10000, retries = 3) {
   let lastErr;
   for (let attempt = 0; attempt <= retries; attempt++) {
+    if (attempt > 0) await sleep(400 * attempt);
     try {
       return await wgetOnce(url, timeoutMs);
     } catch (err) {
