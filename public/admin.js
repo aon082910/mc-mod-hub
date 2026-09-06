@@ -49,6 +49,7 @@ async function loadSettings() {
   document.getElementById('enable_minecraftskins').checked = s.enable_minecraftskins === '1';
   document.getElementById('enable_polymart').checked = s.enable_polymart === '1';
   document.getElementById('enable_github').checked = s.enable_github === '1';
+  document.getElementById('enable_mcreator').checked = s.enable_mcreator === '1';
   document.getElementById('enable_youtube').checked = s.enable_youtube === '1';
   document.getElementById('enable_reddit').checked = s.enable_reddit === '1';
   document.getElementById('results_per_source').value = s.results_per_source || 20;
@@ -91,6 +92,7 @@ async function saveSettings() {
     enable_minecraftskins: document.getElementById('enable_minecraftskins').checked ? '1' : '0',
     enable_polymart: document.getElementById('enable_polymart').checked ? '1' : '0',
     enable_github: document.getElementById('enable_github').checked ? '1' : '0',
+    enable_mcreator: document.getElementById('enable_mcreator').checked ? '1' : '0',
     enable_youtube: document.getElementById('enable_youtube').checked ? '1' : '0',
     enable_reddit: document.getElementById('enable_reddit').checked ? '1' : '0',
     results_per_source: document.getElementById('results_per_source').value,

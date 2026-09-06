@@ -28,6 +28,11 @@
 //    Skins — nobody hosts a cosmetic skin file as a GitHub repo — since a
 //    huge amount of smaller mods/plugins have no listing anywhere else.
 //    `excludeGithub` opts a category out; every other category defaults in.
+//  - MCreator: a mod database for mods built with the MCreator tool — Java
+//    Edition mods only, no modpacks/resourcepacks/etc. section on the site
+//    at all, so `includeMcreator` is only set on "mods" (same treatment as
+//    BetterBedrock: no real server-side search, catalog scraped and
+//    filtered locally instead — see mcreator.js).
 //
 // Minecraft: Java Edition and Bedrock Edition content is not interchangeable
 // (different mod formats, different marketplaces) — Modrinth and CurseForge
@@ -43,6 +48,7 @@ const CATEGORIES = [
     curseforgeClassName: 'Mods',
     scrapeKeyword: 'mod',
     includeBetterBedrock: true,
+    includeMcreator: true,
     tlmodsPath: ''
   },
   {

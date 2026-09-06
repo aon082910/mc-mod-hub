@@ -52,7 +52,7 @@ const EDITABLE_KEYS = [
   'enable_modrinth', 'enable_curseforge', 'enable_youtube', 'enable_reddit',
   'enable_planetminecraft', 'enable_9minecraft', 'enable_betterbedrock',
   'enable_hangar', 'enable_spigot', 'enable_tlmods', 'enable_minecraftskins',
-  'enable_polymart', 'enable_github',
+  'enable_polymart', 'enable_github', 'enable_mcreator',
   'results_per_source', 'cache_ttl_seconds', 'enable_mods_folder'
 ];
 

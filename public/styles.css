@@ -180,6 +180,7 @@ table.results-table tr.result-row:hover { background: var(--green-pale); }
 .source-tag.minecraftskins { border-color: #d35400; color: #d35400; }
 .source-tag.polymart { border-color: #8e44ad; color: #8e44ad; }
 .source-tag.github { border-color: #24292e; color: #24292e; }
+.source-tag.mcreator { border-color: #c0392b; color: #c0392b; }
 
 .other-sites { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; font-size: 12px; }
 .other-sites a {

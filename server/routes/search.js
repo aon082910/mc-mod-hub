@@ -12,13 +12,14 @@ const tlmods = require('../services/tlmods');
 const minecraftskins = require('../services/minecraftskins');
 const polymart = require('../services/polymart');
 const github = require('../services/github');
+const mcreator = require('../services/mcreator');
 const { getCategory } = require('../services/categories');
 const { getCached, setCached } = require('../services/cache');
 
 const SOURCE_KEYS = [
   'enable_modrinth', 'enable_curseforge', 'enable_planetminecraft', 'enable_9minecraft',
   'enable_betterbedrock', 'enable_hangar', 'enable_spigot', 'enable_tlmods', 'enable_minecraftskins',
-  'enable_polymart', 'enable_github'
+  'enable_polymart', 'enable_github', 'enable_mcreator'
 ];
 
 router.get('/search', async (req, res) => {
@@ -136,6 +137,13 @@ router.get('/search', async (req, res) => {
     tasks.push(
       github.search(scrapeQuery, limit, getSetting('github_token'))
         .catch(e => { errors.push({ source: 'github', message: e.message }); return []; })
+    );
+  }
+
+  if (getSetting('enable_mcreator') === '1' && (!category || category.includeMcreator)) {
+    tasks.push(
+      mcreator.search(scrapeQuery, limit)
+        .catch(e => { errors.push({ source: 'mcreator', message: e.message }); return []; })
     );
   }
 
