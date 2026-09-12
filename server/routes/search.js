@@ -13,13 +13,14 @@ const minecraftskins = require('../services/minecraftskins');
 const polymart = require('../services/polymart');
 const github = require('../services/github');
 const mcreator = require('../services/mcreator');
+const mcpedude = require('../services/mcpedude');
 const { getCategory } = require('../services/categories');
 const { getCached, setCached } = require('../services/cache');
 
 const SOURCE_KEYS = [
   'enable_modrinth', 'enable_curseforge', 'enable_planetminecraft', 'enable_9minecraft',
   'enable_betterbedrock', 'enable_hangar', 'enable_spigot', 'enable_tlmods', 'enable_minecraftskins',
-  'enable_polymart', 'enable_github', 'enable_mcreator'
+  'enable_polymart', 'enable_github', 'enable_mcreator', 'enable_mcpedude'
 ];
 
 router.get('/search', async (req, res) => {
@@ -144,6 +145,13 @@ router.get('/search', async (req, res) => {
     tasks.push(
       mcreator.search(scrapeQuery, limit)
         .catch(e => { errors.push({ source: 'mcreator', message: e.message }); return []; })
+    );
+  }
+
+  if (scrapeQuery && getSetting('enable_mcpedude') === '1' && (!category || category.includeMcpedude)) {
+    tasks.push(
+      mcpedude.search(scrapeQuery, limit)
+        .catch(e => { errors.push({ source: 'mcpedude', message: e.message }); return []; })
     );
   }
 

@@ -37,6 +37,7 @@ const DEFAULTS = {
   enable_polymart: '1',
   enable_github: '1',
   enable_mcreator: '1',
+  enable_mcpedude: '1',
   github_token: '',
   results_per_source: '20',
   cache_ttl_seconds: '900',

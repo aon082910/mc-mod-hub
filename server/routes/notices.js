@@ -4,9 +4,10 @@ const { getSetting } = require('../db');
 const modrinth = require('../services/modrinth');
 const ninemc = require('../services/ninemc');
 const curseforge = require('../services/curseforge');
+const mcpedude = require('../services/mcpedude');
 const { getCached, setCached } = require('../services/cache');
 
-const SOURCE_KEYS = ['enable_modrinth', 'enable_9minecraft', 'enable_curseforge'];
+const SOURCE_KEYS = ['enable_modrinth', 'enable_9minecraft', 'enable_curseforge', 'enable_mcpedude'];
 
 // The "newest" notice board merges freshly-published items across sources.
 // CurseForge's contribution is best-effort (see curseforge.js getNewest) and
@@ -43,6 +44,12 @@ router.get('/notices', async (req, res) => {
     tasks.push(
       curseforge.getNewest(cfKey, limit)
         .catch(e => { errors.push({ source: 'curseforge', message: e.message }); return []; })
+    );
+  }
+  if (getSetting('enable_mcpedude') === '1') {
+    tasks.push(
+      mcpedude.getLatest(limit)
+        .catch(e => { errors.push({ source: 'mcpedude', message: e.message }); return []; })
     );
   }
 

@@ -197,6 +197,7 @@ table.results-table tr.result-row:hover { background: var(--green-pale); }
 .source-tag.polymart { border-color: #8e44ad; color: #8e44ad; }
 .source-tag.github { border-color: #24292e; color: #24292e; }
 .source-tag.mcreator { border-color: #c0392b; color: #c0392b; }
+.source-tag.mcpedude { border-color: #16a085; color: #16a085; }
 
 .other-sites { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; font-size: 12px; }
 .other-sites a {

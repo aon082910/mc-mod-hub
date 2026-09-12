@@ -33,6 +33,11 @@
 //    at all, so `includeMcreator` is only set on "mods" (same treatment as
 //    BetterBedrock: no real server-side search, catalog scraped and
 //    filtered locally instead — see mcreator.js).
+//  - McpeDude: a Bedrock-only mods/addons/texture-packs/maps blog with a
+//    real, verified `?s=` search (unlike BetterBedrock/MinecraftSkins/
+//    MCreator, its search isn't a no-op). `includeMcpedude` covers every
+//    category it actually has a section for — mods, resource/texture
+//    packs, maps/worlds, and the dedicated Bedrock Add-Ons category.
 //
 // Minecraft: Java Edition and Bedrock Edition content is not interchangeable
 // (different mod formats, different marketplaces) — Modrinth and CurseForge
@@ -49,6 +54,7 @@ const CATEGORIES = [
     scrapeKeyword: 'mod',
     includeBetterBedrock: true,
     includeMcreator: true,
+    includeMcpedude: true,
     tlmodsPath: ''
   },
   {
@@ -69,6 +75,7 @@ const CATEGORIES = [
     curseforgeClassName: 'Resource Packs',
     scrapeKeyword: 'texture pack',
     includeBetterBedrock: true,
+    includeMcpedude: true,
     tlmodsPath: 'resourcepacks'
   },
   {
@@ -99,6 +106,7 @@ const CATEGORIES = [
     curseforgeClassName: 'Worlds',
     scrapeKeyword: 'map',
     includeBetterBedrock: false,
+    includeMcpedude: true,
     tlmodsPath: 'maps'
   },
   {
@@ -109,6 +117,7 @@ const CATEGORIES = [
     curseforgeClassName: null,
     scrapeKeyword: 'addon',
     includeBetterBedrock: true,
+    includeMcpedude: true,
     javaSourcesExcluded: true,
     tlmodsPath: null
   },
